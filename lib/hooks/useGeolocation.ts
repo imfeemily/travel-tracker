@@ -27,12 +27,16 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
 
   const watchIdRef = useRef<number | null>(null);
   const lastSentRef = useRef<number>(0);
+  // Always call the latest onPosition without restarting the watch
+  const onPositionRef = useRef(onPosition);
+  useEffect(() => { onPositionRef.current = onPosition; }, [onPosition]);
 
   const start = useCallback(() => {
     if (!navigator.geolocation) {
       setState((s) => ({ ...s, error: "Geolocation not supported" }));
       return;
     }
+    if (watchIdRef.current !== null) return; // already watching
 
     setState((s) => ({ ...s, isTracking: true, error: null }));
 
@@ -44,7 +48,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
         const now = Date.now();
         if (now - lastSentRef.current >= intervalMs) {
           lastSentRef.current = now;
-          onPosition?.(lat, lng, accuracy);
+          onPositionRef.current?.(lat, lng, accuracy);
         }
       },
       (err) => {
@@ -56,7 +60,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
         timeout: 10000,
       }
     );
-  }, [intervalMs, onPosition]);
+  }, [intervalMs]);
 
   const stop = useCallback(() => {
     if (watchIdRef.current !== null) {

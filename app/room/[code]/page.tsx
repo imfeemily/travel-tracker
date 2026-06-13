@@ -137,6 +137,17 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     return () => clearInterval(t);
   }, [activeTrip]);
 
+  // Start/stop geo tracking in sync with activeTrip state
+  useEffect(() => {
+    if (activeTrip) {
+      geo.start();
+    } else {
+      geo.stop();
+    }
+    // geo.start/stop are stable — intentionally omitting geo from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTrip]);
+
   async function startTrip() {
     if (!room || !userId) return;
     if (permState !== "granted") { requestLocation(); return; }
@@ -148,7 +159,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       setActiveTrip(trip);
       setPoints([]);
       setTotalDist(0);
-      geo.start();
+      // geo.start() is triggered by the useEffect above once activeTrip state commits
     }
     setStartingTrip(false);
   }
@@ -156,7 +167,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   async function stopTrip() {
     if (!activeTrip || !room) return;
     setStoppingTrip(true);
-    geo.stop();
+    // geo.stop() is triggered by the useEffect above once activeTrip clears
     await supabase.from("trips").update({
       status: "ended",
       ended_at: new Date().toISOString(),
@@ -164,7 +175,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       total_points: points.length,
     }).eq("id", activeTrip.id);
     await supabase.from("rooms").update({ is_active: false }).eq("id", room.id);
-    setActiveTrip(null);
+    setActiveTrip(null); // triggers geo.stop() via useEffect
     setPoints([]);
     setTotalDist(0);
     setStoppingTrip(false);

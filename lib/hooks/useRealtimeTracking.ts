@@ -16,7 +16,11 @@ export function useRealtimeTracking({
 }: UseRealtimeTrackingOptions) {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
+  // Always call the latest onNewPoint without resubscribing
+  const onNewPointRef = useRef(onNewPoint);
+  useEffect(() => { onNewPointRef.current = onNewPoint; }, [onNewPoint]);
 
   const subscribe = useCallback(() => {
     if (!tripId) return;
@@ -32,13 +36,13 @@ export function useRealtimeTracking({
           filter: `trip_id=eq.${tripId}`,
         },
         (payload) => {
-          onNewPoint?.(payload.new as LocationPoint);
+          onNewPointRef.current?.(payload.new as LocationPoint);
         }
       )
       .subscribe((status) => {
         setIsSubscribed(status === "SUBSCRIBED");
       });
-  }, [tripId, onNewPoint, supabase]);
+  }, [tripId, supabase]);
 
   const unsubscribe = useCallback(() => {
     if (channelRef.current) {
