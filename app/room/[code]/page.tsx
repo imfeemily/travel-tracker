@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import {
   Radio, Square, Play, Copy, Check, Users,
   Navigation, Clock, Loader2, MapPin, Wifi, WifiOff,
-  ChevronUp, ChevronDown, LocateFixed, AlertTriangle
+  ChevronUp, ChevronDown, LocateFixed, AlertTriangle, ArrowLeft
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useGeolocation } from "@/lib/hooks/useGeolocation";
@@ -216,8 +216,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       {/* ── Permission denied banner ── */}
       {permState === "denied" && (
         <div
-          className="absolute top-4 left-4 right-4 z-20 flex items-start gap-3 px-4 py-3 animate-slide-up"
-          style={{ background: "rgba(225,25,0,0.12)", border: "1px solid rgba(225,25,0,0.3)", borderRadius: "var(--radius-lg)" }}
+          className="absolute top-4 left-4 right-4 flex items-start gap-3 px-4 py-3 animate-slide-up"
+          style={{ zIndex: 1100, background: "rgba(225,25,0,0.12)", border: "1px solid rgba(225,25,0,0.3)", borderRadius: "var(--radius-lg)" }}
         >
           <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" style={{ color: "var(--danger)" }} />
           <div className="flex-1 min-w-0">
@@ -234,14 +234,21 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
       {/* ── Top bar ── */}
       <div
-        className="absolute left-4 right-4 z-10"
-        style={{ top: permState === "denied" ? "5.5rem" : "1rem" }}
+        className="absolute left-4 right-4"
+        style={{ zIndex: 1000, top: permState === "denied" ? "5.5rem" : "1rem" }}
       >
         <div
           className="flex items-center justify-between px-4 py-3"
           style={{ background: "var(--surface)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}
         >
           <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+              style={{ background: "var(--surface-2)", color: "var(--text-muted)" }}
+            >
+              <ArrowLeft size={13} />
+            </button>
             {activeTrip
               ? <Radio size={14} className="animate-pulse-accent flex-shrink-0" style={{ color: "var(--go)" }} />
               : <MapPin size={14} className="flex-shrink-0" style={{ color: "var(--text-muted)" }} />
@@ -272,11 +279,15 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             </div>
 
             {/* Location button */}
-            {permState === "granted" && (
+            {permState === "granted" && currentLocation && (
               <button
-                onClick={() => currentLocation && null}
+                onClick={() => {
+                  // Pan map to current location — TrackingMap exposes no imperative API,
+                  // so we update currentLocation to trigger the existing effect
+                  setCurrentLocation([...currentLocation]);
+                }}
                 className="flex items-center justify-center w-8 h-8 transition-colors active:bg-[var(--surface-3)]"
-                style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", color: "var(--text-muted)" }}
+                style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", color: "var(--go)" }}
                 title="My location"
               >
                 <LocateFixed size={13} />
@@ -302,8 +313,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
       {/* ── Bottom sheet ── */}
       <div
-        className="absolute left-4 right-4 z-10 safe-bottom"
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
+        className="absolute left-4 right-4 safe-bottom"
+        style={{ zIndex: 1000, bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
       >
         <div
           style={{

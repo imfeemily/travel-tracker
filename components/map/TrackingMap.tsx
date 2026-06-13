@@ -28,6 +28,11 @@ export function TrackingMap({
   const startMarkerRef = useRef<Marker | null>(null);
   const currentLocMarkerRef = useRef<Marker | null>(null);
   const currentLocCircleRef = useRef<Circle | null>(null);
+  // Refs so async init can read latest prop values after awaits
+  const currentLocationRef = useRef(currentLocation);
+  const pointsRef = useRef(points);
+  useEffect(() => { currentLocationRef.current = currentLocation; }, [currentLocation]);
+  useEffect(() => { pointsRef.current = points; }, [points]);
 
   function drawRoute(L: typeof import("leaflet"), map: Map) {
     const latlngs: [number, number][] = points.map((p) => [p.lat, p.lng]);
@@ -119,8 +124,11 @@ export function TrackingMap({
       // Component may have unmounted during the async imports
       if (destroyed || !containerRef.current) return;
 
+      // Use refs to get latest prop values after the async gap
+      const latestLoc = currentLocationRef.current;
+      const latestPoints = pointsRef.current;
       const defaultCenter: [number, number] =
-        center ?? currentLocation ?? (points[0] ? [points[0].lat, points[0].lng] : [13.7563, 100.5018]);
+        center ?? latestLoc ?? (latestPoints[0] ? [latestPoints[0].lat, latestPoints[0].lng] : [13.7563, 100.5018]);
 
       const map = L.map(containerRef.current, {
         center: defaultCenter,
@@ -138,8 +146,11 @@ export function TrackingMap({
 
       mapRef.current = map;
 
-      if (points.length > 0) drawRoute(L, map);
-      if (currentLocation) drawCurrentLocation(L, map, currentLocation);
+      if (latestPoints.length > 0) drawRoute(L, map);
+      if (latestLoc) {
+        drawCurrentLocation(L, map, latestLoc);
+        if (latestPoints.length === 0) map.panTo(latestLoc, { animate: false });
+      }
     })();
 
     return () => {
