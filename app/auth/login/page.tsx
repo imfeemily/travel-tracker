@@ -34,8 +34,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       {/* Top bar */}
       <div className="px-6 py-5 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded flex items-center justify-center" style={{ background: "var(--text)" }}>
-          <MapPin size={15} color="var(--bg)" strokeWidth={2.5} />
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--go)", boxShadow: "0 0 16px var(--go-glow)" }}>
+          <MapPin size={15} color="#000" strokeWidth={2.5} />
         </div>
         <span className="text-base font-black tracking-tight">TrackR</span>
       </div>
@@ -43,9 +43,9 @@ export default function LoginPage() {
       {/* Form area */}
       <div className="flex-1 flex items-center justify-center px-5 py-10">
         <div className="w-full max-w-sm animate-slide-up">
-          <h1 className="text-3xl font-black mb-1 tracking-tight">Sign in</h1>
+          <h1 className="text-3xl font-black mb-1.5 tracking-tight">Welcome back</h1>
           <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-            Enter your credentials to continue
+            Sign in to continue tracking
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -133,11 +133,10 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 text-sm font-bold tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 mt-2"
+              className="w-full py-4 text-sm font-bold tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 mt-2 rounded-xl"
               style={{
-                background: "var(--text)",
-                color: "var(--bg)",
-                borderRadius: "var(--radius)",
+                background: "var(--go)",
+                color: "#000",
               }}
             >
               {loading ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Sign in"}

@@ -19,7 +19,7 @@ interface TripWithRoom extends Trip {
 
 const TIER_LABELS: Record<number, { label: string; color: string }> = {
   1: { label: "Full", color: "var(--go)" },
-  2: { label: "Downsampled", color: "var(--warn)" },
+  2: { label: "Sampled", color: "var(--warn)" },
   3: { label: "Summary", color: "var(--text-muted)" },
   4: { label: "Archived", color: "var(--text-muted)" },
 };
@@ -104,164 +104,181 @@ export default function HistoryPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 size={20} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+        <Loader2 size={22} className="animate-spin" style={{ color: "var(--text-muted)" }} />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Mobile-style sticky header */}
-      <div
-        className="sticky top-0 z-10 px-4 pt-5 pb-4 md:px-8 md:pt-8 md:pb-6"
-        style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}
-      >
-        <h1 className="text-2xl font-black tracking-tight">History</h1>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>{trips.length} trips recorded</p>
+    <div className="max-w-xl mx-auto pb-28 md:pb-8">
+
+      {/* Header */}
+      <div className="px-5 pt-8 pb-6 md:px-8 md:pt-10">
+        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
+          {trips.length} trips recorded
+        </p>
+        <h1 className="text-3xl font-black tracking-tight">History</h1>
       </div>
 
-      <div className="px-4 md:px-8 py-5 md:py-8">
-
-      {/* Filter tabs */}
-      <div
-        className="flex mb-6 p-1"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}
-      >
-        {FILTERS.map((f) => {
-          const key = f.toLowerCase() as Filter;
-          const active = filter === key;
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(key)}
-              className="flex-1 py-1.5 text-xs font-semibold transition-all"
-              style={{
-                background: active ? "var(--text)" : "transparent",
-                color: active ? "var(--bg)" : "var(--text-muted)",
-                borderRadius: "var(--radius-sm)",
-              }}
-            >
-              {f}
-            </button>
-          );
-        })}
-      </div>
-
-      {filtered.length === 0 ? (
+      {/* Filter pills */}
+      <div className="px-5 md:px-8 mb-6">
         <div
-          className="py-20 text-center"
-          style={{ border: "1px dashed var(--border)", borderRadius: "var(--radius-lg)" }}
+          className="flex p-1 gap-1 rounded-xl"
+          style={{ background: "var(--surface)" }}
         >
-          <MapPin size={28} className="mx-auto mb-3" style={{ color: "var(--text-muted)", opacity: 0.4 }} />
-          <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>No trips found</p>
-        </div>
-      ) : (
-        <div
-          className="uber-list overflow-hidden"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)" }}
-        >
-          {filtered.map((trip) => {
-            const tierInfo = TIER_LABELS[trip.retention_tier] ?? TIER_LABELS[1];
-            const isExpanded = expandedId === trip.id;
-
+          {FILTERS.map((f) => {
+            const key = f.toLowerCase() as Filter;
+            const active = filter === key;
             return (
-              <div key={trip.id}>
-                {/* Trip row */}
-                <div
-                  className="flex items-center gap-4 px-5 py-4 min-h-[68px] cursor-pointer transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)]"
-                  onClick={() => toggleExpand(trip)}
-                >
-                  <div
-                    className="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center"
-                    style={{ background: "var(--surface-2)" }}
-                  >
-                    {trip.retention_tier === 4
-                      ? <Archive size={14} style={{ color: "var(--text-muted)" }} />
-                      : <MapPin size={14} style={{ color: "var(--text-muted)" }} />
-                    }
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-semibold text-sm truncate">{trip.room?.name ?? "Unknown room"}</span>
-                      <span
-                        className="text-[10px] font-black uppercase tracking-wider flex-shrink-0"
-                        style={{ color: tierInfo.color }}
-                      >
-                        {tierInfo.label}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs" style={{ color: "var(--text-muted)" }}>
-                      <span className="flex items-center gap-1">
-                        <Clock size={10} /> {formatDuration(trip.started_at, trip.ended_at)}
-                      </span>
-                      <span className="hidden sm:flex items-center gap-1">
-                        <Navigation size={10} /> {formatDistance(trip.distance_km)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-xs mono font-medium" style={{ color: "var(--text-muted)" }}>
-                      {new Date(trip.started_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
-                    </span>
-                    {isExpanded
-                      ? <ChevronUp size={14} style={{ color: "var(--text-muted)" }} />
-                      : <ChevronDown size={14} style={{ color: "var(--text-muted)" }} />
-                    }
-                  </div>
-                </div>
-
-                {/* Expanded map */}
-                {isExpanded && (
-                  <div className="px-5 pb-5 animate-fade-in" style={{ borderTop: "1px solid var(--border)" }}>
-                    <div className="mt-4" style={{ height: 280 }}>
-                      {loadingPoints
-                        ? (
-                          <div
-                            className="h-full flex items-center justify-center"
-                            style={{ background: "var(--surface-2)", borderRadius: "var(--radius)" }}
-                          >
-                            <Loader2 size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
-                          </div>
-                        )
-                        : expandedPoints.length > 0
-                          ? <TrackingMap points={expandedPoints} isLive={false} className="h-full" />
-                          : (
-                            <div
-                              className="h-full flex items-center justify-center"
-                              style={{ background: "var(--surface-2)", borderRadius: "var(--radius)" }}
-                            >
-                              <p className="text-sm" style={{ color: "var(--text-muted)" }}>No route data</p>
-                            </div>
-                          )
-                      }
-                    </div>
-
-                    {expandedSummary && (
-                      <div className="mt-3 grid grid-cols-2 gap-2">
-                        {[
-                          { label: "Duration", value: `${expandedSummary.duration_minutes} min` },
-                          { label: "Distance", value: formatDistance(expandedSummary.distance_km) },
-                        ].map(({ label, value }) => (
-                          <div
-                            key={label}
-                            className="p-3"
-                            style={{ background: "var(--surface-2)", borderRadius: "var(--radius)" }}
-                          >
-                            <div className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>{label}</div>
-                            <div className="text-base font-black mono">{value}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              <button
+                key={f}
+                onClick={() => setFilter(key)}
+                className="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
+                style={{
+                  background: active ? "var(--surface-3)" : "transparent",
+                  color: active ? "var(--text)" : "var(--text-muted)",
+                }}
+              >
+                {f}
+              </button>
             );
           })}
         </div>
-      )}
+      </div>
+
+      {/* List */}
+      <div className="px-5 md:px-8">
+        {filtered.length === 0 ? (
+          <div
+            className="py-16 text-center rounded-2xl"
+            style={{ border: "1px dashed var(--border)", background: "var(--surface)" }}
+          >
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ background: "var(--surface-2)" }}
+            >
+              <MapPin size={22} style={{ color: "var(--text-muted)" }} />
+            </div>
+            <p className="text-sm font-semibold mb-1">No trips found</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              Completed trips will appear here
+            </p>
+          </div>
+        ) : (
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}
+          >
+            {filtered.map((trip, i) => {
+              const tierInfo = TIER_LABELS[trip.retention_tier] ?? TIER_LABELS[1];
+              const isExpanded = expandedId === trip.id;
+              const isLast = i === filtered.length - 1;
+
+              return (
+                <div
+                  key={trip.id}
+                  style={{ borderBottom: isLast && !isExpanded ? "none" : "1px solid var(--border-subtle)" }}
+                >
+                  <div
+                    className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)]"
+                    style={{ minHeight: 72 }}
+                    onClick={() => toggleExpand(trip)}
+                  >
+                    <div
+                      className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ background: "var(--surface-2)" }}
+                    >
+                      {trip.retention_tier === 4
+                        ? <Archive size={15} style={{ color: "var(--text-muted)" }} />
+                        : <Navigation size={15} style={{ color: "var(--text-muted)" }} />
+                      }
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="font-bold text-sm truncate">{trip.room?.name ?? "Unknown room"}</span>
+                        <span
+                          className="text-[10px] font-black uppercase tracking-wider flex-shrink-0 px-1.5 py-0.5 rounded-md"
+                          style={{
+                            background: trip.retention_tier === 1 ? "var(--go-dim)" : "var(--surface-2)",
+                            color: tierInfo.color,
+                          }}
+                        >
+                          {tierInfo.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs" style={{ color: "var(--text-muted)" }}>
+                        <span className="flex items-center gap-1">
+                          <Clock size={10} /> {formatDuration(trip.started_at, trip.ended_at)}
+                        </span>
+                        <span className="hidden sm:flex items-center gap-1">
+                          <Navigation size={10} /> {formatDistance(trip.distance_km)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs mono font-medium" style={{ color: "var(--text-muted)" }}>
+                        {new Date(trip.started_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                      </span>
+                      {isExpanded
+                        ? <ChevronUp size={14} style={{ color: "var(--text-muted)" }} />
+                        : <ChevronDown size={14} style={{ color: "var(--text-muted)" }} />
+                      }
+                    </div>
+                  </div>
+
+                  {/* Expanded map */}
+                  {isExpanded && (
+                    <div className="px-5 pb-5 animate-fade-in" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                      <div className="mt-4 rounded-xl overflow-hidden" style={{ height: 260 }}>
+                        {loadingPoints
+                          ? (
+                            <div
+                              className="h-full flex items-center justify-center"
+                              style={{ background: "var(--surface-2)" }}
+                            >
+                              <Loader2 size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                            </div>
+                          )
+                          : expandedPoints.length > 0
+                            ? <TrackingMap points={expandedPoints} isLive={false} className="h-full" />
+                            : (
+                              <div
+                                className="h-full flex flex-col items-center justify-center gap-2"
+                                style={{ background: "var(--surface-2)" }}
+                              >
+                                <MapPin size={20} style={{ color: "var(--text-muted)" }} />
+                                <p className="text-sm" style={{ color: "var(--text-muted)" }}>No route data</p>
+                              </div>
+                            )
+                        }
+                      </div>
+
+                      {expandedSummary && (
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          {[
+                            { label: "Duration", value: `${expandedSummary.duration_minutes} min` },
+                            { label: "Distance", value: formatDistance(expandedSummary.distance_km) },
+                          ].map(({ label, value }) => (
+                            <div
+                              key={label}
+                              className="p-3.5 rounded-xl"
+                              style={{ background: "var(--surface-2)" }}
+                            >
+                              <div className="text-xs mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>{label}</div>
+                              <div className="text-lg font-black mono">{value}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
