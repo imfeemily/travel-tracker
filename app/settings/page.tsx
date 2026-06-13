@@ -128,12 +128,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 md:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-black tracking-tight mb-0.5">Settings</h1>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Account and storage</p>
+    <div className="max-w-xl mx-auto">
+      {/* Mobile-style sticky header */}
+      <div
+        className="sticky top-0 z-10 px-4 pt-5 pb-4 md:px-8 md:pt-8 md:pb-6"
+        style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}
+      >
+        <h1 className="text-2xl font-black tracking-tight">Settings</h1>
+        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>Account and storage</p>
       </div>
 
+      <div className="px-4 md:px-8 py-5 md:py-8">
       {/* Account */}
       <Section icon={Shield} title="Account">
         <div className="flex items-center justify-between py-1">
@@ -313,6 +318,7 @@ export default function SettingsPage() {
           </div>
         </Section>
       )}
+      </div>
     </div>
   );
 }
