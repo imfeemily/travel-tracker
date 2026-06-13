@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   Radio, Square, Play, Copy, Check, Users,
-  Navigation, Clock, Loader2, MapPin, Wifi, WifiOff
+  Navigation, Clock, Loader2, MapPin, Wifi, WifiOff, ChevronDown, ChevronUp
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useGeolocation } from "@/lib/hooks/useGeolocation";
@@ -13,7 +13,6 @@ import { useRealtimeTracking } from "@/lib/hooks/useRealtimeTracking";
 import { Room, Trip, LocationPoint } from "@/types";
 import { formatDuration, formatDistance, calculateDistance } from "@/utils";
 
-// Dynamic import for Leaflet (no SSR)
 const TrackingMap = dynamic(
   () => import("@/components/map/TrackingMap").then((m) => m.TrackingMap),
   { ssr: false, loading: () => <MapSkeleton /> }
@@ -21,9 +20,8 @@ const TrackingMap = dynamic(
 
 function MapSkeleton() {
   return (
-    <div className="w-full h-full rounded-2xl flex items-center justify-center"
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
+    <div className="w-full h-full flex items-center justify-center" style={{ background: "var(--bg)" }}>
+      <Loader2 size={20} className="animate-spin" style={{ color: "var(--text-muted)" }} />
     </div>
   );
 }
@@ -43,10 +41,10 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   const [codeCopied, setCodeCopied] = useState(false);
   const [elapsed, setElapsed] = useState("");
   const [totalDist, setTotalDist] = useState(0);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   const isOwner = room?.owner_id === userId;
 
-  // Save location point to DB
   const savePoint = useCallback(
     async (lat: number, lng: number, accuracy: number | null) => {
       if (!activeTrip) return;
@@ -61,13 +59,11 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   const geo = useGeolocation({ intervalMs: 5000, onPosition: savePoint });
 
-  // Realtime subscription — viewer updates
   useRealtimeTracking({
     tripId: activeTrip?.id ?? null,
     onNewPoint: (point) => {
       setPoints((prev) => {
         const updated = [...prev, point];
-        // recalculate distance
         if (updated.length > 1) {
           const last = updated[updated.length - 2];
           setTotalDist((d) => d + calculateDistance(last.lat, last.lng, point.lat, point.lng));
@@ -77,7 +73,6 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     },
   });
 
-  // Load room + active trip + existing points
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/auth/login"); return; }
@@ -88,19 +83,12 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     setRoom(roomData);
 
     const { data: tripData } = await supabase
-      .from("trips")
-      .select("*")
-      .eq("room_id", roomData.id)
-      .eq("status", "active")
-      .maybeSingle();
+      .from("trips").select("*").eq("room_id", roomData.id).eq("status", "active").maybeSingle();
 
     if (tripData) {
       setActiveTrip(tripData);
       const { data: pts } = await supabase
-        .from("location_points")
-        .select("*")
-        .eq("trip_id", tripData.id)
-        .order("recorded_at", { ascending: true });
+        .from("location_points").select("*").eq("trip_id", tripData.id).order("recorded_at", { ascending: true });
       const loaded = pts ?? [];
       setPoints(loaded);
       if (loaded.length > 1) {
@@ -111,14 +99,12 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         setTotalDist(dist);
       }
     }
-
     setLoading(false);
   }, [code, supabase, router]);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
-  // Elapsed timer
   useEffect(() => {
     if (!activeTrip) return;
     const t = setInterval(() => setElapsed(formatDuration(activeTrip.started_at)), 1000);
@@ -129,10 +115,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     if (!room || !userId) return;
     setStartingTrip(true);
     const { data: trip } = await supabase
-      .from("trips")
-      .insert({ room_id: room.id, user_id: userId, status: "active" })
-      .select()
-      .single();
+      .from("trips").insert({ room_id: room.id, user_id: userId, status: "active" }).select().single();
     if (trip) {
       await supabase.from("rooms").update({ is_active: true }).eq("id", room.id);
       setActiveTrip(trip);
@@ -168,104 +151,154 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen"><Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} /></div>;
+    return (
+      <div className="flex items-center justify-center h-screen" style={{ background: "var(--bg)" }}>
+        <Loader2 size={20} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+      </div>
+    );
   }
 
   if (!room) return null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] md:h-screen p-3 md:p-4 gap-3 md:gap-4">
-      {/* Header bar */}
-      <div className="flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          <div className="flex items-center gap-2 min-w-0">
-            {activeTrip
-              ? <Radio size={15} className="animate-pulse-accent flex-shrink-0" style={{ color: "var(--accent)" }} />
-              : <MapPin size={15} className="flex-shrink-0" style={{ color: "var(--text-muted)" }} />}
-            <h1 className="font-extrabold text-base md:text-lg truncate">{room.name}</h1>
-          </div>
-          {activeTrip && (
-            <span className="px-2 py-0.5 rounded-full text-xs font-bold mono flex-shrink-0" style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>LIVE</span>
-          )}
-        </div>
+    <div className="relative h-[calc(100vh-64px)] md:h-screen overflow-hidden" style={{ background: "var(--bg)" }}>
+      {/* Full-screen map */}
+      <div className="absolute inset-0">
+        <TrackingMap points={points} isLive={!!activeTrip} className="h-full w-full" />
+      </div>
 
-        <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-          <button onClick={copyCode}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold mono transition-all"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: codeCopied ? "var(--accent)" : "var(--text-dim)" }}>
-            {codeCopied ? <Check size={11} /> : <Copy size={11} />}
-            {room.code}
-          </button>
-          <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs mono"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: activeTrip ? "var(--accent)" : "var(--text-muted)" }}>
-            {activeTrip ? <Wifi size={11} /> : <WifiOff size={11} />}
-            <span className="hidden sm:inline">{activeTrip ? "Connected" : "Idle"}</span>
+      {/* ── Top overlay bar ── */}
+      <div className="absolute top-0 left-0 right-0 z-10 px-4 pt-4">
+        <div
+          className="flex items-center justify-between px-4 py-3"
+          style={{
+            background: "var(--surface)",
+            borderRadius: "var(--radius-lg)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            {activeTrip
+              ? <Radio size={14} className="animate-pulse-accent flex-shrink-0" style={{ color: "var(--go)" }} />
+              : <MapPin size={14} className="flex-shrink-0" style={{ color: "var(--text-muted)" }} />
+            }
+            <span className="font-bold text-sm truncate">{room.name}</span>
+            {activeTrip && (
+              <span
+                className="text-[10px] font-black uppercase tracking-wider flex-shrink-0 px-1.5 py-0.5 rounded"
+                style={{ background: "var(--go-dim)", color: "var(--go)" }}
+              >
+                LIVE
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* GPS */}
+            <div
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium"
+              style={{
+                background: "var(--surface-2)",
+                borderRadius: "var(--radius-sm)",
+                color: activeTrip ? "var(--go)" : "var(--text-muted)",
+              }}
+            >
+              {activeTrip ? <Wifi size={11} /> : <WifiOff size={11} />}
+              <span className="hidden sm:inline">{activeTrip ? "On" : "Off"}</span>
+            </div>
+            {/* Room code */}
+            <button
+              onClick={copyCode}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold mono transition-opacity hover:opacity-80"
+              style={{
+                background: "var(--surface-2)",
+                borderRadius: "var(--radius-sm)",
+                color: codeCopied ? "var(--go)" : "var(--text-dim)",
+              }}
+            >
+              {codeCopied ? <Check size={11} /> : <Copy size={11} />}
+              {room.code}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Map + panel: stacked on mobile, side-by-side on desktop */}
-      <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-4 min-h-0">
-        {/* Map */}
-        <div className="flex-1 min-h-0" style={{ minHeight: "40vh" }}>
-          <TrackingMap
-            points={points}
-            isLive={!!activeTrip}
-            className="h-full"
-          />
-        </div>
+      {/* ── Bottom overlay panel ── */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-4">
+        <div
+          style={{
+            background: "var(--surface)",
+            borderRadius: "var(--radius-lg)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {/* Panel toggle (mobile) */}
+          <button
+            className="w-full flex items-center justify-between px-5 py-3.5 md:hidden"
+            onClick={() => setPanelOpen(!panelOpen)}
+          >
+            <span className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              Trip details
+            </span>
+            {panelOpen ? <ChevronDown size={14} style={{ color: "var(--text-muted)" }} /> : <ChevronUp size={14} style={{ color: "var(--text-muted)" }} />}
+          </button>
 
-        {/* Side panel — horizontal scroll row on mobile, vertical column on desktop */}
-        <div className="md:w-60 flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-x-visible flex-shrink-0 pb-1 md:pb-0">
-          {/* Stats */}
-          <div className="p-4 rounded-2xl flex-shrink-0 w-64 md:w-auto" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <div className="text-xs font-bold mb-3" style={{ color: "var(--text-muted)" }}>TRIP STATS</div>
-            <div className="space-y-3">
-              <Stat icon={Clock} label="Duration" value={activeTrip ? elapsed || "00:00" : "—"} />
-              <Stat icon={Navigation} label="Distance" value={totalDist > 0 ? formatDistance(totalDist) : "—"} />
-              <Stat icon={MapPin} label="Points" value={points.length.toString()} />
-              <Stat
-                icon={Users}
-                label="GPS"
-                value={geo.accuracy ? `±${Math.round(geo.accuracy)}m` : "—"}
-                accent={!!geo.isTracking}
-              />
+          {/* Stats row — always visible on desktop, collapsible on mobile */}
+          <div className={`px-5 pb-4 gap-4 ${panelOpen ? "block" : "hidden"} md:block`}>
+            {/* Stats */}
+            <div className="grid grid-cols-4 gap-2 mb-4 pt-4 md:pt-0">
+              <StatBox icon={Clock} label="Duration" value={activeTrip ? elapsed || "0:00" : "—"} live={!!activeTrip} />
+              <StatBox icon={Navigation} label="Distance" value={totalDist > 0 ? formatDistance(totalDist) : "—"} />
+              <StatBox icon={MapPin} label="Points" value={points.length.toString()} />
+              <StatBox icon={Users} label="GPS" value={geo.accuracy ? `±${Math.round(geo.accuracy)}m` : "—"} live={!!geo.isTracking} />
             </div>
-          </div>
 
-          {/* Controls — only owner */}
-          {isOwner && (
-            <div className="p-4 rounded-2xl flex-shrink-0 w-56 md:w-auto" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-              <div className="text-xs font-bold mb-3" style={{ color: "var(--text-muted)" }}>CONTROLS</div>
-              {!activeTrip ? (
-                <button onClick={startTrip} disabled={startingTrip}
-                  className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ background: "var(--accent)", color: "white", boxShadow: "0 0 20px var(--accent-glow)" }}>
-                  {startingTrip ? <Loader2 size={15} className="animate-spin" /> : <><Play size={15} fill="currentColor" /> Start Trip</>}
-                </button>
-              ) : (
-                <button onClick={stopTrip} disabled={stoppingTrip}
-                  className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ background: "rgba(239,68,68,0.15)", color: "var(--danger)", border: "1px solid rgba(239,68,68,0.3)" }}>
-                  {stoppingTrip ? <Loader2 size={15} className="animate-spin" /> : <><Square size={15} fill="currentColor" /> End Trip</>}
-                </button>
+            {/* Controls */}
+            <div className="flex gap-3 items-center">
+              {isOwner && (
+                <>
+                  {!activeTrip ? (
+                    <button
+                      onClick={startTrip}
+                      disabled={startingTrip}
+                      className="flex-1 py-3.5 font-bold text-sm flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40"
+                      style={{ background: "var(--go)", color: "white", borderRadius: "var(--radius)" }}
+                    >
+                      {startingTrip
+                        ? <Loader2 size={15} className="animate-spin" />
+                        : <><Play size={15} fill="currentColor" /> Start trip</>
+                      }
+                    </button>
+                  ) : (
+                    <button
+                      onClick={stopTrip}
+                      disabled={stoppingTrip}
+                      className="flex-1 py-3.5 font-bold text-sm flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40"
+                      style={{ background: "var(--danger)", color: "white", borderRadius: "var(--radius)" }}
+                    >
+                      {stoppingTrip
+                        ? <Loader2 size={15} className="animate-spin" />
+                        : <><Square size={15} fill="currentColor" /> End trip</>
+                      }
+                    </button>
+                  )}
+                </>
               )}
-            </div>
-          )}
 
-          {/* Share */}
-          <div className="p-4 rounded-2xl flex-shrink-0 w-56 md:w-auto" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <div className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>SHARE ROOM</div>
-            <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>Anyone with this code can view the live map</p>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 text-center py-2 rounded-xl mono text-lg font-extrabold tracking-widest"
-                style={{ background: "var(--surface-2)", color: "var(--accent)" }}>
-                {room.code}
-              </div>
-              <button onClick={copyCode}
-                className="p-2.5 rounded-xl transition-all hover:opacity-80"
-                style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>
-                {codeCopied ? <Check size={16} /> : <Copy size={16} />}
+              {/* Share code */}
+              <button
+                onClick={copyCode}
+                className="flex items-center gap-2 px-4 py-3.5 text-sm font-bold transition-opacity hover:opacity-80"
+                style={{
+                  background: "var(--surface-2)",
+                  color: codeCopied ? "var(--go)" : "var(--text)",
+                  borderRadius: "var(--radius)",
+                  border: "1px solid var(--border)",
+                  minWidth: 0,
+                }}
+              >
+                {codeCopied ? <Check size={14} /> : <Copy size={14} />}
+                <span className="mono font-black tracking-widest">{room.code}</span>
               </button>
             </div>
           </div>
@@ -275,14 +308,17 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   );
 }
 
-function Stat({ icon: Icon, label, value, accent = false }: { icon: React.ElementType; label: string; value: string; accent?: boolean }) {
+function StatBox({ icon: Icon, label, value, live = false }: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  live?: boolean;
+}) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <Icon size={13} style={{ color: accent ? "var(--accent)" : "var(--text-muted)" }} />
-        <span className="text-xs" style={{ color: "var(--text-muted)" }}>{label}</span>
-      </div>
-      <span className="text-sm font-bold mono" style={{ color: accent ? "var(--accent)" : "var(--text)" }}>{value}</span>
+    <div className="flex flex-col items-center text-center p-2.5" style={{ background: "var(--surface-2)", borderRadius: "var(--radius)" }}>
+      <Icon size={11} className="mb-1" style={{ color: live ? "var(--go)" : "var(--text-muted)" }} />
+      <div className="text-base font-black mono leading-none" style={{ color: live ? "var(--go)" : "var(--text)" }}>{value}</div>
+      <div className="text-[9px] font-semibold uppercase tracking-wide mt-1" style={{ color: "var(--text-muted)" }}>{label}</div>
     </div>
   );
 }

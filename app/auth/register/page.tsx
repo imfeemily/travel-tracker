@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Heart, Eye, EyeOff, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+import { MapPin, Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
@@ -24,7 +24,6 @@ export default function RegisterPage() {
     if (password.length < 6) { setError("Password must be at least 6 characters"); return; }
     setLoading(true);
     setError("");
-
     const { error: err } = await supabase.auth.signUp({ email, password });
     if (err) {
       setError(err.message);
@@ -36,90 +35,122 @@ export default function RegisterPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--bg)" }}>
-        <div className="text-center max-w-md animate-slide-up">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: "var(--accent-dim)" }}>
-            <CheckCircle2 size={32} style={{ color: "var(--accent)" }} />
-          </div>
-          <h2 className="text-2xl font-extrabold mb-2">Check your inbox</h2>
+      <div className="min-h-screen flex flex-col items-center justify-center px-5" style={{ background: "var(--bg)" }}>
+        <div className="w-full max-w-sm text-center animate-slide-up">
+          <CheckCircle2 size={48} className="mx-auto mb-6" style={{ color: "var(--go)" }} />
+          <h2 className="text-2xl font-black mb-2 tracking-tight">Check your inbox</h2>
           <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-            We sent a confirmation link to <span className="mono font-bold" style={{ color: "var(--text)" }}>{email}</span>
+            We sent a confirmation link to{" "}
+            <span className="font-semibold" style={{ color: "var(--text)" }}>{email}</span>
           </p>
-          <Link href="/auth/login" className="px-6 py-3 rounded-xl text-sm font-bold" style={{ background: "var(--accent)", color: "white" }}>
-            Go to login
+          <Link
+            href="/auth/login"
+            className="block w-full py-4 text-sm font-bold text-center transition-opacity hover:opacity-90"
+            style={{ background: "var(--text)", color: "var(--bg)", borderRadius: "var(--radius)" }}
+          >
+            Go to sign in
           </Link>
         </div>
       </div>
     );
   }
 
+  const inputStyle = {
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius)",
+    color: "var(--text)",
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--bg)" }}>
-      <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)", backgroundSize: "48px 48px", opacity: 0.25 }} />
-
-      <div className="relative z-10 w-full max-w-md animate-slide-up">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--accent)", boxShadow: "0 0 20px var(--accent-glow)" }}>
-            <Heart size={15} color="white" strokeWidth={2.5} fill="white" />
-          </div>
-          <span className="text-xl font-bold">FamilyTrackr</span>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
+      {/* Top bar */}
+      <div className="px-6 py-5 flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded flex items-center justify-center" style={{ background: "var(--text)" }}>
+          <MapPin size={15} color="var(--bg)" strokeWidth={2.5} />
         </div>
+        <span className="text-base font-black tracking-tight">TrackR</span>
+      </div>
 
-        <div className="p-8 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <h1 className="text-2xl font-extrabold mb-1">Create account</h1>
-          <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>Start tracking your journeys for free</p>
+      <div className="flex-1 flex items-center justify-center px-5 py-10">
+        <div className="w-full max-w-sm animate-slide-up">
+          <h1 className="text-3xl font-black mb-1 tracking-tight">Create account</h1>
+          <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
+            Start tracking your journeys for free
+          </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-dim)" }}>Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all mono"
-                style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)" }}
-                onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
-                onBlur={(e) => (e.target.style.borderColor = "var(--border)")} />
+              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-dim)" }}>
+                Email
+              </label>
+              <input
+                type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com" required
+                className="w-full px-4 py-3.5 text-sm outline-none transition-colors"
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "var(--text)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+              />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-dim)" }}>Password</label>
+              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-dim)" }}>
+                Password
+              </label>
               <div className="relative">
-                <input type={showPass ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 6 characters" required
-                  className="w-full px-4 py-3 pr-11 rounded-xl text-sm outline-none transition-all mono"
-                  style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)" }}
-                  onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
-                  onBlur={(e) => (e.target.style.borderColor = "var(--border)")} />
-                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }}>
+                <input
+                  type={showPass ? "text" : "password"} value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min. 6 characters" required
+                  className="w-full px-4 py-3.5 pr-12 text-sm outline-none transition-colors"
+                  style={inputStyle}
+                  onFocus={(e) => (e.target.style.borderColor = "var(--text)")}
+                  onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+                />
+                <button type="button" onClick={() => setShowPass(!showPass)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-muted)" }}>
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-dim)" }}>Confirm password</label>
-              <input type={showPass ? "text" : "password"} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Re-enter password" required
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all mono"
-                style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)" }}
-                onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
-                onBlur={(e) => (e.target.style.borderColor = "var(--border)")} />
+              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-dim)" }}>
+                Confirm password
+              </label>
+              <input
+                type={showPass ? "text" : "password"} value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="Re-enter password" required
+                className="w-full px-4 py-3.5 text-sm outline-none transition-colors"
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "var(--text)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+              />
             </div>
 
             {error && (
-              <div className="px-4 py-3 rounded-xl text-sm mono" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "var(--danger)" }}>
+              <div className="px-4 py-3 text-sm"
+                style={{ background: "rgba(225,25,0,0.08)", border: "1px solid rgba(225,25,0,0.25)", borderRadius: "var(--radius)", color: "var(--danger)" }}>
                 {error}
               </div>
             )}
 
-            <button type="submit" disabled={loading}
-              className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ background: "var(--accent)", color: "white", boxShadow: "0 0 24px var(--accent-glow)" }}>
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <>Create account <ArrowRight size={16} /></>}
+            <button
+              type="submit" disabled={loading}
+              className="w-full py-4 text-sm font-bold tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 mt-2"
+              style={{ background: "var(--text)", color: "var(--bg)", borderRadius: "var(--radius)" }}>
+              {loading ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Create account"}
             </button>
           </form>
-        </div>
 
-        <p className="text-center text-sm mt-6" style={{ color: "var(--text-muted)" }}>
-          Already have an account?{" "}
-          <Link href="/auth/login" className="font-semibold" style={{ color: "var(--accent)" }}>Sign in</Link>
-        </p>
+          <p className="text-center text-sm mt-6" style={{ color: "var(--text-muted)" }}>
+            Already have an account?{" "}
+            <Link href="/auth/login" className="font-semibold" style={{ color: "var(--text)" }}>Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
