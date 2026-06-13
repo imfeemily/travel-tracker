@@ -23,6 +23,8 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [retentionDays, setRetentionDays] = useState(90);
   const [autoPurge, setAutoPurge] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -79,12 +81,29 @@ export default function SettingsPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
+  async function saveRetentionSettings() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setSaving(true);
+    setSaveMsg("");
+    await supabase
+      .from("rooms")
+      .update({ retention_days: retentionDays, auto_purge_enabled: autoPurge })
+      .eq("owner_id", user.id);
+    setSaveMsg("Settings saved");
+    setSaving(false);
+    setTimeout(() => setSaveMsg(""), 3000);
+  }
+
   async function runManualPurge() {
     setPurging(true);
     setPurgeMsg("");
-    // Simulate purge (in production: call edge function)
-    await new Promise((r) => setTimeout(r, 1500));
-    setPurgeMsg("Purge completed successfully");
+    try {
+      const res = await fetch("/api/purge", { method: "POST" });
+      setPurgeMsg(res.ok ? "Purge completed successfully" : "Purge failed — check Edge Function logs");
+    } catch {
+      setPurgeMsg("Purge failed — network error");
+    }
     setPurging(false);
     setTimeout(() => setPurgeMsg(""), 3000);
     load();
@@ -194,6 +213,20 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-1">
+            <button onClick={saveRetentionSettings} disabled={saving}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50"
+              style={{ background: "var(--accent)", color: "#0a0e1a" }}>
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+              Save settings
+            </button>
+            {saveMsg && (
+              <span className="text-xs mono flex items-center gap-1" style={{ color: "var(--accent)" }}>
+                <Check size={11} /> {saveMsg}
+              </span>
+            )}
           </div>
 
           <div className="pt-2 border-t" style={{ borderColor: "var(--border)" }}>
