@@ -32,7 +32,6 @@ export function TrackingMap({
   function drawRoute(L: typeof import("leaflet"), map: Map) {
     const latlngs: [number, number][] = points.map((p) => [p.lat, p.lng]);
 
-    // Polyline — Uber green
     if (polylineRef.current) {
       polylineRef.current.setLatLngs(latlngs);
     } else {
@@ -45,7 +44,6 @@ export function TrackingMap({
       }).addTo(map);
     }
 
-    // Start dot
     if (!startMarkerRef.current && latlngs.length > 0) {
       const startIcon = L.divIcon({
         html: `<div style="width:10px;height:10px;border-radius:50%;background:#06c167;border:2px solid #000;box-shadow:0 0 0 2px #06c16744"></div>`,
@@ -55,7 +53,6 @@ export function TrackingMap({
       startMarkerRef.current = L.marker(latlngs[0], { icon: startIcon }).addTo(map);
     }
 
-    // Current / last point marker
     const last = latlngs[latlngs.length - 1];
     const pulse = isLive
       ? `<div style="position:absolute;inset:-8px;border-radius:50%;background:rgba(6,193,103,0.25);animation:ping-go 1.4s ease-out infinite"></div>`
@@ -95,7 +92,6 @@ export function TrackingMap({
       currentLocMarkerRef.current = L.marker(loc, { icon }).addTo(map);
     }
 
-    // Accuracy circle (subtle)
     if (currentLocCircleRef.current) {
       currentLocCircleRef.current.setLatLng(loc);
     } else {
@@ -114,14 +110,19 @@ export function TrackingMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    let destroyed = false;
+
     (async () => {
       const L = (await import("leaflet")).default;
       await import("leaflet/dist/leaflet.css");
 
+      // Component may have unmounted during the async imports
+      if (destroyed || !containerRef.current) return;
+
       const defaultCenter: [number, number] =
         center ?? currentLocation ?? (points[0] ? [points[0].lat, points[0].lng] : [13.7563, 100.5018]);
 
-      const map = L.map(containerRef.current!, {
+      const map = L.map(containerRef.current, {
         center: defaultCenter,
         zoom,
         zoomControl: false,
@@ -140,6 +141,19 @@ export function TrackingMap({
       if (points.length > 0) drawRoute(L, map);
       if (currentLocation) drawCurrentLocation(L, map, currentLocation);
     })();
+
+    return () => {
+      destroyed = true;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        polylineRef.current = null;
+        markerRef.current = null;
+        startMarkerRef.current = null;
+        currentLocMarkerRef.current = null;
+        currentLocCircleRef.current = null;
+      }
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -148,7 +162,8 @@ export function TrackingMap({
     if (!mapRef.current || points.length === 0) return;
     (async () => {
       const L = (await import("leaflet")).default;
-      drawRoute(L, mapRef.current!);
+      if (!mapRef.current) return;
+      drawRoute(L, mapRef.current);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points]);
@@ -158,10 +173,10 @@ export function TrackingMap({
     if (!mapRef.current || !currentLocation) return;
     (async () => {
       const L = (await import("leaflet")).default;
-      drawCurrentLocation(L, mapRef.current!, currentLocation);
-      // Pan to user location only when no trip is active
+      if (!mapRef.current) return;
+      drawCurrentLocation(L, mapRef.current, currentLocation);
       if (points.length === 0) {
-        mapRef.current!.panTo(currentLocation, { animate: true, duration: 0.8 });
+        mapRef.current.panTo(currentLocation, { animate: true, duration: 0.8 });
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
