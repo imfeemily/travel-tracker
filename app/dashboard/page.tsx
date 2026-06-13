@@ -83,10 +83,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-5xl">
+    <div className="p-4 md:p-10 max-w-5xl">
       {/* Header */}
-      <div className="mb-10">
-        <h1 className="text-3xl font-extrabold tracking-tight mb-1">Dashboard</h1>
+      <div className="mb-6 md:mb-10">
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1">Dashboard</h1>
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>Manage your tracking rooms and active trips</p>
       </div>
 
@@ -108,7 +108,7 @@ export default function DashboardPage() {
       )}
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-3 gap-3 md:gap-4 mb-8 md:mb-10">
         {[
           { icon: MapPin, label: "Total rooms", value: rooms.length },
           { icon: Navigation, label: "Active trips", value: activeTrips.length },
@@ -123,7 +123,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Join room */}
-      <div className="mb-8 p-6 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <div className="mb-6 md:mb-8 p-4 md:p-6 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <h2 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: "var(--text-dim)" }}>
           <Hash size={14} /> Join a room
         </h2>
@@ -141,7 +141,7 @@ export default function DashboardPage() {
           />
           <button onClick={joinRoom} disabled={joining || !joinCode.trim()}
             className="px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-50 transition-all hover:opacity-90"
-            style={{ background: "var(--accent)", color: "#0a0e1a" }}>
+            style={{ background: "var(--accent)", color: "white" }}>
             {joining ? <Loader2 size={14} className="animate-spin" /> : <><Radio size={14} /> Join</>}
           </button>
         </div>
@@ -171,7 +171,7 @@ export default function DashboardPage() {
                 onKeyDown={(e) => e.key === "Enter" && createRoom()} />
               <button onClick={createRoom} disabled={creating || !newRoomName.trim()}
                 className="px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-50 transition-all hover:opacity-90"
-                style={{ background: "var(--accent)", color: "#0a0e1a" }}>
+                style={{ background: "var(--accent)", color: "white" }}>
                 {creating ? <Loader2 size={14} className="animate-spin" /> : "Create"}
               </button>
             </div>

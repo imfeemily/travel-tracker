@@ -174,42 +174,40 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   if (!room) return null;
 
   return (
-    <div className="flex flex-col h-screen p-4 gap-4">
+    <div className="flex flex-col h-[calc(100vh-64px)] md:h-screen p-3 md:p-4 gap-3 md:gap-4">
       {/* Header bar */}
       <div className="flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             {activeTrip
-              ? <Radio size={16} className="animate-pulse-accent" style={{ color: "var(--accent)" }} />
-              : <MapPin size={16} style={{ color: "var(--text-muted)" }} />}
-            <h1 className="font-extrabold text-lg">{room.name}</h1>
+              ? <Radio size={15} className="animate-pulse-accent flex-shrink-0" style={{ color: "var(--accent)" }} />
+              : <MapPin size={15} className="flex-shrink-0" style={{ color: "var(--text-muted)" }} />}
+            <h1 className="font-extrabold text-base md:text-lg truncate">{room.name}</h1>
           </div>
           {activeTrip && (
-            <span className="px-2 py-0.5 rounded-full text-xs font-bold mono" style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>LIVE</span>
+            <span className="px-2 py-0.5 rounded-full text-xs font-bold mono flex-shrink-0" style={{ background: "var(--accent-dim)", color: "var(--accent)" }}>LIVE</span>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Room code copy */}
+        <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
           <button onClick={copyCode}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold mono transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold mono transition-all"
             style={{ background: "var(--surface)", border: "1px solid var(--border)", color: codeCopied ? "var(--accent)" : "var(--text-dim)" }}>
-            {codeCopied ? <Check size={12} /> : <Copy size={12} />}
+            {codeCopied ? <Check size={11} /> : <Copy size={11} />}
             {room.code}
           </button>
-
-          {/* Connection status */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs mono"
+          <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs mono"
             style={{ background: "var(--surface)", border: "1px solid var(--border)", color: activeTrip ? "var(--accent)" : "var(--text-muted)" }}>
-            {activeTrip ? <Wifi size={12} /> : <WifiOff size={12} />}
-            {activeTrip ? "Connected" : "Idle"}
+            {activeTrip ? <Wifi size={11} /> : <WifiOff size={11} />}
+            <span className="hidden sm:inline">{activeTrip ? "Connected" : "Idle"}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 flex gap-4 min-h-0">
+      {/* Map + panel: stacked on mobile, side-by-side on desktop */}
+      <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-4 min-h-0">
         {/* Map */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-h-0" style={{ minHeight: "40vh" }}>
           <TrackingMap
             points={points}
             isLive={!!activeTrip}
@@ -217,10 +215,10 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           />
         </div>
 
-        {/* Side panel */}
-        <div className="w-64 flex flex-col gap-3 flex-shrink-0">
+        {/* Side panel — horizontal scroll row on mobile, vertical column on desktop */}
+        <div className="md:w-60 flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-x-visible flex-shrink-0 pb-1 md:pb-0">
           {/* Stats */}
-          <div className="p-4 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <div className="p-4 rounded-2xl flex-shrink-0 w-64 md:w-auto" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <div className="text-xs font-bold mb-3" style={{ color: "var(--text-muted)" }}>TRIP STATS</div>
             <div className="space-y-3">
               <Stat icon={Clock} label="Duration" value={activeTrip ? elapsed || "00:00" : "—"} />
@@ -237,12 +235,12 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
           {/* Controls — only owner */}
           {isOwner && (
-            <div className="p-4 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <div className="p-4 rounded-2xl flex-shrink-0 w-56 md:w-auto" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
               <div className="text-xs font-bold mb-3" style={{ color: "var(--text-muted)" }}>CONTROLS</div>
               {!activeTrip ? (
                 <button onClick={startTrip} disabled={startingTrip}
                   className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ background: "var(--accent)", color: "#0a0e1a", boxShadow: "0 0 20px var(--accent-glow)" }}>
+                  style={{ background: "var(--accent)", color: "white", boxShadow: "0 0 20px var(--accent-glow)" }}>
                   {startingTrip ? <Loader2 size={15} className="animate-spin" /> : <><Play size={15} fill="currentColor" /> Start Trip</>}
                 </button>
               ) : (
@@ -256,8 +254,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           )}
 
           {/* Share */}
-          <div className="p-4 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <div className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>SHARE THIS ROOM</div>
+          <div className="p-4 rounded-2xl flex-shrink-0 w-56 md:w-auto" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <div className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>SHARE ROOM</div>
             <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>Anyone with this code can view the live map</p>
             <div className="flex items-center gap-2">
               <div className="flex-1 text-center py-2 rounded-xl mono text-lg font-extrabold tracking-widest"

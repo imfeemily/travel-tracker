@@ -103,14 +103,14 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold tracking-tight mb-1">Trip History</h1>
+    <div className="p-4 md:p-10 max-w-4xl">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1">Trip History</h1>
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>{trips.length} trips recorded</p>
       </div>
 
       {/* Filter pills */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex flex-wrap items-center gap-2 mb-6">
         <Filter size={14} style={{ color: "var(--text-muted)" }} />
         {(["all", "full", "summary", "archived"] as const).map((f) => (
           <button key={f} onClick={() => setFilter(f)}
@@ -157,10 +157,10 @@ export default function HistoryPage() {
                         {tierInfo.label}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 text-xs mono" style={{ color: "var(--text-muted)" }}>
+                    <div className="flex items-center gap-3 text-xs mono" style={{ color: "var(--text-muted)" }}>
                       <span className="flex items-center gap-1"><Clock size={11} /> {formatDuration(trip.started_at, trip.ended_at)}</span>
-                      <span className="flex items-center gap-1"><Navigation size={11} /> {formatDistance(trip.distance_km)}</span>
-                      <span className="flex items-center gap-1"><MapPin size={11} /> {trip.total_points} pts</span>
+                      <span className="flex items-center gap-1 hidden sm:flex"><Navigation size={11} /> {formatDistance(trip.distance_km)}</span>
+                      <span className="flex items-center gap-1 hidden sm:flex"><MapPin size={11} /> {trip.total_points} pts</span>
                     </div>
                   </div>
 

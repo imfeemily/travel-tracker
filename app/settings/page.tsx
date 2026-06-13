@@ -136,9 +136,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-3xl">
-      <div className="mb-10">
-        <h1 className="text-3xl font-extrabold tracking-tight mb-1">Settings</h1>
+    <div className="p-4 md:p-10 max-w-3xl">
+      <div className="mb-6 md:mb-10">
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1">Settings</h1>
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>Account and storage management</p>
       </div>
 
@@ -218,7 +218,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3 pt-1">
             <button onClick={saveRetentionSettings} disabled={saving}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ background: "var(--accent)", color: "#0a0e1a" }}>
+              style={{ background: "var(--accent)", color: "white" }}>
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
               Save settings
             </button>

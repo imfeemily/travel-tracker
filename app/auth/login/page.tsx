@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MapPin, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import { Heart, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -37,10 +37,10 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md animate-slide-up">
         {/* Logo */}
         <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "var(--accent)", boxShadow: "0 0 20px var(--accent-glow)" }}>
-            <MapPin size={16} color="#0a0e1a" strokeWidth={2.5} />
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--accent)", boxShadow: "0 0 20px var(--accent-glow)" }}>
+            <Heart size={15} color="white" strokeWidth={2.5} fill="white" />
           </div>
-          <span className="text-xl font-bold">TrackR</span>
+          <span className="text-xl font-bold">FamilyTrackr</span>
         </div>
 
         <div className="p-8 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
@@ -93,7 +93,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ background: "var(--accent)", color: "#0a0e1a", boxShadow: "0 0 24px var(--accent-glow)" }}
+              style={{ background: "var(--accent)", color: "white", boxShadow: "0 0 24px var(--accent-glow)" }}
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <>Sign in <ArrowRight size={16} /></>}
             </button>
