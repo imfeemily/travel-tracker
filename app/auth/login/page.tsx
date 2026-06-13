@@ -33,8 +33,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       {/* Top bar */}
-      <div className="px-6 py-5 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--go)", boxShadow: "0 0 16px var(--go-glow)" }}>
+      <div className="px-6 py-5 flex items-center gap-2.5 animate-slide-down">
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center animate-float" style={{ background: "var(--go)", boxShadow: "0 0 16px var(--go-glow)" }}>
           <MapPin size={15} color="#000" strokeWidth={2.5} />
         </div>
         <span className="text-base font-black tracking-tight">TrackR</span>
@@ -42,7 +42,7 @@ export default function LoginPage() {
 
       {/* Form area */}
       <div className="flex-1 flex items-center justify-center px-5 py-10">
-        <div className="w-full max-w-sm animate-slide-up">
+        <div className="w-full max-w-sm animate-slide-up" style={{ animationDelay: "80ms" }}>
           <h1 className="text-3xl font-black mb-1.5 tracking-tight">Welcome back</h1>
           <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
             Sign in to continue tracking
@@ -60,15 +60,13 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
-                className="w-full px-4 py-3.5 text-sm outline-none transition-colors"
+                className="w-full px-4 py-3.5 text-sm input-glow"
                 style={{
                   background: "var(--surface)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius)",
                   color: "var(--text)",
                 }}
-                onFocus={(e) => (e.target.style.borderColor = "var(--text)")}
-                onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
               />
             </div>
 
@@ -133,7 +131,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 text-sm font-bold tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 mt-2 rounded-xl"
+              className="w-full py-4 text-sm font-bold tracking-wide disabled:opacity-40 mt-2 rounded-xl btn-glow"
               style={{
                 background: "var(--go)",
                 color: "#000",

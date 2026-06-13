@@ -17,8 +17,10 @@ export function Sidebar() {
   const router = useRouter();
   const supabase = createClient();
   const [userInitial, setUserInitial] = useState("?");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user?.email) setUserInitial(user.email[0].toUpperCase());
     });
@@ -34,7 +36,7 @@ export function Sidebar() {
 
   return (
     <>
-      {/* ── Desktop left sidebar (md+) ── */}
+      {/* ── Desktop left sidebar ── */}
       <aside
         className="hidden md:flex fixed left-0 top-0 h-screen w-64 flex-col z-50"
         style={{
@@ -46,8 +48,11 @@ export function Sidebar() {
         <div className="px-5 py-5 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "var(--go)", boxShadow: "0 0 16px var(--go-glow)" }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 animate-float"
+              style={{
+                background: "var(--go)",
+                boxShadow: "0 0 20px var(--go-glow)",
+              }}
             >
               <MapPin size={16} color="#000" strokeWidth={2.5} />
             </div>
@@ -60,24 +65,35 @@ export function Sidebar() {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-2 flex flex-col gap-0.5 overflow-y-auto">
-          {NAV.map(({ href, icon: Icon, label }) => {
+          {NAV.map(({ href, icon: Icon, label }, i) => {
             const active = pathname.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all"
+                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all relative overflow-hidden"
                 style={{
                   color: active ? "var(--text)" : "var(--text-muted)",
                   background: active ? "var(--surface-2)" : "transparent",
                   fontWeight: active ? 700 : 500,
+                  animationDelay: `${i * 60}ms`,
                 }}
               >
+                {active && (
+                  <span
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r-full"
+                    style={{
+                      height: 20,
+                      background: "var(--go)",
+                      boxShadow: "0 0 8px var(--go-glow)",
+                    }}
+                  />
+                )}
                 <Icon
                   size={18}
                   className="flex-shrink-0"
                   strokeWidth={active ? 2.5 : 1.75}
-                  style={{ color: active ? "var(--text)" : "var(--text-muted)" }}
+                  style={{ color: active ? "var(--go)" : "var(--text-muted)" }}
                 />
                 {label}
               </Link>
@@ -86,11 +102,12 @@ export function Sidebar() {
 
           {isRoom && (
             <div
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold mt-1"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold mt-1 animate-slide-left"
               style={{ background: "var(--go-dim)", color: "var(--go)" }}
             >
               <Radio size={18} className="animate-pulse-go flex-shrink-0" strokeWidth={2.5} />
               Live room
+              <span className="live-dot ml-auto" style={{ width: 6, height: 6 }} />
             </div>
           )}
         </nav>
@@ -99,10 +116,10 @@ export function Sidebar() {
         <div className="px-3 pb-5 pt-3 flex-shrink-0 border-t" style={{ borderColor: "var(--border-subtle)" }}>
           <div className="flex items-center gap-3 px-3 py-2 mb-1">
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
-              style={{ background: "var(--surface-2)", color: "var(--text)" }}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 transition-all"
+              style={{ background: "var(--surface-2)", color: "var(--go)", border: "1px solid var(--border)" }}
             >
-              {userInitial}
+              {mounted ? userInitial : "·"}
             </div>
             <span className="text-xs font-medium flex-1 truncate" style={{ color: "var(--text-dim)" }}>
               My account
@@ -110,7 +127,7 @@ export function Sidebar() {
           </div>
           <button
             onClick={signOut}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-[var(--surface-2)]"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-[var(--surface-2)] btn-press"
             style={{ color: "var(--text-muted)" }}
           >
             <LogOut size={16} className="flex-shrink-0" strokeWidth={1.75} />
@@ -121,9 +138,11 @@ export function Sidebar() {
 
       {/* ── Mobile bottom tab bar ── */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 animate-slide-up"
         style={{
-          background: "var(--surface)",
+          background: "rgba(18,18,18,0.92)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
           borderTop: "1px solid var(--border-subtle)",
           paddingBottom: "max(env(safe-area-inset-bottom, 0px), 4px)",
         }}
@@ -135,38 +154,41 @@ export function Sidebar() {
               <Link
                 key={href}
                 href={href}
-                className="flex-1 flex flex-col items-center justify-center gap-1 pt-3 pb-2 min-h-[56px] relative transition-colors active:opacity-60"
-                style={{ color: active ? "var(--text)" : "var(--text-muted)" }}
+                className="flex-1 flex flex-col items-center justify-center gap-1 pt-3 pb-2 min-h-[56px] relative transition-all active:opacity-60"
+                style={{ color: active ? "var(--go)" : "var(--text-muted)" }}
               >
                 {active && (
                   <span
-                    className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full"
-                    style={{ width: 24, height: 2.5, background: "var(--go)" }}
+                    className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full nav-indicator"
+                    style={{
+                      width: 28, height: 2.5,
+                      background: "var(--go)",
+                      boxShadow: "0 0 8px var(--go-glow)",
+                    }}
                   />
                 )}
                 <Icon size={21} strokeWidth={active ? 2.5 : 1.75} />
-                <span
-                  className="text-[10px] font-semibold"
-                  style={{ color: active ? "var(--text)" : "var(--text-muted)" }}
-                >
-                  {label}
-                </span>
+                <span className="text-[10px] font-semibold">{label}</span>
               </Link>
             );
           })}
 
           {isRoom ? (
             <div
-              className="flex-1 flex flex-col items-center justify-center gap-1 pt-3 pb-2 min-h-[56px]"
+              className="flex-1 flex flex-col items-center justify-center gap-1 pt-3 pb-2 min-h-[56px] relative"
               style={{ color: "var(--go)" }}
             >
+              <span
+                className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full"
+                style={{ width: 28, height: 2.5, background: "var(--go)", boxShadow: "0 0 8px var(--go-glow)" }}
+              />
               <Radio size={21} strokeWidth={2.5} className="animate-pulse-go" />
               <span className="text-[10px] font-semibold">Live</span>
             </div>
           ) : (
             <button
               onClick={signOut}
-              className="flex-1 flex flex-col items-center justify-center gap-1 pt-3 pb-2 min-h-[56px] transition-colors active:opacity-60"
+              className="flex-1 flex flex-col items-center justify-center gap-1 pt-3 pb-2 min-h-[56px] transition-all active:opacity-60"
               style={{ color: "var(--text-muted)" }}
             >
               <LogOut size={21} strokeWidth={1.75} />

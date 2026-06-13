@@ -113,7 +113,7 @@ export default function HistoryPage() {
     <div className="max-w-xl mx-auto pb-28 md:pb-8">
 
       {/* Header */}
-      <div className="px-5 pt-8 pb-6 md:px-8 md:pt-10">
+      <div className="px-5 pt-8 pb-6 md:px-8 md:pt-10 animate-slide-down">
         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
           {trips.length} trips recorded
         </p>
@@ -121,7 +121,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Filter pills */}
-      <div className="px-5 md:px-8 mb-6">
+      <div className="px-5 md:px-8 mb-6 animate-slide-up" style={{ animationDelay: "80ms" }}>
         <div
           className="flex p-1 gap-1 rounded-xl"
           style={{ background: "var(--surface)" }}
@@ -147,17 +147,17 @@ export default function HistoryPage() {
       </div>
 
       {/* List */}
-      <div className="px-5 md:px-8">
+      <div className="px-5 md:px-8 animate-slide-up" style={{ animationDelay: "160ms" }}>
         {filtered.length === 0 ? (
           <div
-            className="py-16 text-center rounded-2xl"
+            className="py-16 text-center rounded-2xl animate-fade-in"
             style={{ border: "1px dashed var(--border)", background: "var(--surface)" }}
           >
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ background: "var(--surface-2)" }}
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float"
+              style={{ background: "var(--go-dim)" }}
             >
-              <MapPin size={22} style={{ color: "var(--text-muted)" }} />
+              <Navigation size={22} style={{ color: "var(--go)" }} />
             </div>
             <p className="text-sm font-semibold mb-1">No trips found</p>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -180,8 +180,8 @@ export default function HistoryPage() {
                   style={{ borderBottom: isLast && !isExpanded ? "none" : "1px solid var(--border-subtle)" }}
                 >
                   <div
-                    className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)]"
-                    style={{ minHeight: 72 }}
+                    className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-all hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)] animate-slide-left"
+                    style={{ minHeight: 72, animationDelay: `${i * 40}ms` }}
                     onClick={() => toggleExpand(trip)}
                   >
                     <div

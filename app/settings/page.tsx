@@ -131,14 +131,14 @@ export default function SettingsPage() {
     <div className="max-w-xl mx-auto pb-28 md:pb-8">
 
       {/* Header */}
-      <div className="px-5 pt-8 pb-6 md:px-8 md:pt-10">
+      <div className="px-5 pt-8 pb-6 md:px-8 md:pt-10 animate-slide-down">
         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
           Preferences
         </p>
         <h1 className="text-3xl font-black tracking-tight">Settings</h1>
       </div>
 
-      <div className="px-5 md:px-8 flex flex-col gap-4">
+      <div className="px-5 md:px-8 flex flex-col gap-4 stagger-children">
 
         {/* Account */}
         <Card icon={Shield} title="Account">
@@ -344,7 +344,7 @@ function Card({ icon: Icon, title, children, danger = false }: {
 }) {
   return (
     <div
-      className="rounded-2xl overflow-hidden"
+      className="rounded-2xl overflow-hidden animate-slide-up card-hover"
       style={{
         background: "var(--surface)",
         border: danger ? "1px solid rgba(255,61,61,0.15)" : "none",

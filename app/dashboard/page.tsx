@@ -82,7 +82,15 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 size={22} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center animate-float"
+            style={{ background: "var(--go-dim)" }}
+          >
+            <MapPin size={18} style={{ color: "var(--go)" }} />
+          </div>
+          <Loader2 size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+        </div>
       </div>
     );
   }
@@ -93,7 +101,7 @@ export default function DashboardPage() {
     <div className="max-w-xl mx-auto pb-28 md:pb-8">
 
       {/* ── Header ── */}
-      <div className="px-5 pt-8 pb-6 md:px-8 md:pt-10">
+      <div className="px-5 pt-8 pb-6 md:px-8 md:pt-10 animate-slide-down">
         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
           {userEmail ? userEmail.split("@")[0] : "Dashboard"}
         </p>
@@ -102,10 +110,10 @@ export default function DashboardPage() {
 
       {/* ── Live banner ── */}
       {activeTrips.length > 0 && activeRoom && (
-        <div className="px-5 md:px-8 mb-5 animate-slide-down">
+        <div className="px-5 md:px-8 mb-5 animate-scale-in">
           <Link
             href={`/room/${activeRoom.code}`}
-            className="flex items-center gap-4 px-5 py-4 rounded-2xl transition-opacity active:opacity-80"
+            className="flex items-center gap-4 px-5 py-4 rounded-2xl btn-glow"
             style={{
               background: "var(--go)",
               boxShadow: "0 0 32px var(--go-glow)",
@@ -125,7 +133,7 @@ export default function DashboardPage() {
 
       {/* ── Stats row ── */}
       <div className="px-5 md:px-8 mb-6">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 stagger-children">
           {[
             { label: "Rooms", value: rooms.length, icon: MapPin },
             { label: "Active", value: activeTrips.length, icon: Navigation, live: activeTrips.length > 0 },
@@ -133,15 +141,12 @@ export default function DashboardPage() {
           ].map(({ label, value, icon: Icon, live }) => (
             <div
               key={label}
-              className="px-4 py-4 rounded-2xl"
-              style={{
-                background: "var(--surface)",
-                boxShadow: "var(--shadow-card)",
-              }}
+              className="px-4 py-4 rounded-2xl card-hover animate-scale-in"
+              style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}
             >
               <Icon
                 size={13}
-                className="mb-3"
+                className={`mb-3 ${live ? "animate-float" : ""}`}
                 style={{ color: live ? "var(--go)" : "var(--text-muted)" }}
               />
               <div
@@ -157,9 +162,9 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Join room ── */}
-      <div className="px-5 md:px-8 mb-6">
+      <div className="px-5 md:px-8 mb-6 animate-slide-up" style={{ animationDelay: "200ms" }}>
         <div
-          className="rounded-2xl overflow-hidden"
+          className="rounded-2xl overflow-hidden card-hover"
           style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}
         >
           <div className="px-5 pt-4 pb-3">
@@ -173,40 +178,41 @@ export default function DashboardPage() {
               onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setJoinError(""); }}
               placeholder="Enter 6-char code"
               maxLength={6}
-              className="flex-1 px-4 py-3.5 text-sm outline-none transition-colors mono tracking-[0.2em] font-bold"
+              className="flex-1 px-4 py-3.5 text-sm input-glow mono tracking-[0.2em] font-bold"
               style={{
                 background: "var(--surface-2)",
                 border: "1px solid var(--border)",
                 borderRadius: "var(--radius)",
                 color: "var(--text)",
+                outline: "none",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "var(--go)")}
-              onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
               onKeyDown={(e) => e.key === "Enter" && joinRoom()}
             />
             <button
               onClick={joinRoom}
               disabled={joining || joinCode.trim().length !== 6}
-              className="px-5 py-3.5 text-sm font-bold flex items-center gap-2 transition-opacity hover:opacity-80 disabled:opacity-30"
-              style={{ background: "var(--go)", color: "#000", borderRadius: "var(--radius)" }}
+              className="px-5 py-3.5 text-sm font-bold flex items-center gap-2 disabled:opacity-30 btn-glow rounded-xl"
+              style={{ background: "var(--go)", color: "#000" }}
             >
               {joining ? <Loader2 size={14} className="animate-spin" /> : <Radio size={14} />}
               Join
             </button>
           </div>
           {joinError && (
-            <p className="px-5 pb-4 text-xs font-medium" style={{ color: "var(--danger)" }}>{joinError}</p>
+            <p className="px-5 pb-4 text-xs font-medium animate-slide-up" style={{ color: "var(--danger)" }}>
+              {joinError}
+            </p>
           )}
         </div>
       </div>
 
       {/* ── Rooms ── */}
-      <div className="px-5 md:px-8">
+      <div className="px-5 md:px-8 animate-slide-up" style={{ animationDelay: "280ms" }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-black text-base tracking-tight">Your rooms</h2>
           <button
             onClick={() => setShowCreate(!showCreate)}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-all active:opacity-70"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl btn-press"
             style={showCreate
               ? { background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }
               : { background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }
@@ -220,7 +226,7 @@ export default function DashboardPage() {
         {/* Create form */}
         {showCreate && (
           <div
-            className="mb-4 p-4 rounded-2xl animate-slide-down"
+            className="mb-4 p-4 rounded-2xl animate-scale-in"
             style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}
           >
             <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
@@ -232,22 +238,21 @@ export default function DashboardPage() {
                 onChange={(e) => setNewRoomName(e.target.value)}
                 placeholder="e.g. School run, Family trip"
                 autoFocus
-                className="flex-1 px-4 py-3 text-sm outline-none transition-colors"
+                className="flex-1 px-4 py-3 text-sm input-glow"
                 style={{
                   background: "var(--surface-2)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius)",
                   color: "var(--text)",
+                  outline: "none",
                 }}
-                onFocus={(e) => (e.target.style.borderColor = "var(--go)")}
-                onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                 onKeyDown={(e) => e.key === "Enter" && createRoom()}
               />
               <button
                 onClick={createRoom}
                 disabled={creating || !newRoomName.trim()}
-                className="px-5 py-3 text-sm font-bold transition-opacity hover:opacity-80 disabled:opacity-30"
-                style={{ background: "var(--go)", color: "#000", borderRadius: "var(--radius)" }}
+                className="px-5 py-3 text-sm font-bold disabled:opacity-30 btn-glow rounded-xl"
+                style={{ background: "var(--go)", color: "#000" }}
               >
                 {creating ? <Loader2 size={14} className="animate-spin" /> : "Create"}
               </button>
@@ -258,14 +263,14 @@ export default function DashboardPage() {
         {/* Rooms list */}
         {rooms.length === 0 ? (
           <div
-            className="py-16 text-center rounded-2xl"
+            className="py-16 text-center rounded-2xl animate-fade-in"
             style={{ border: "1px dashed var(--border)", background: "var(--surface)" }}
           >
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ background: "var(--surface-2)" }}
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float"
+              style={{ background: "var(--go-dim)" }}
             >
-              <MapPin size={22} style={{ color: "var(--text-muted)" }} />
+              <MapPin size={22} style={{ color: "var(--go)" }} />
             </div>
             <p className="text-sm font-semibold mb-1">No rooms yet</p>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -283,16 +288,16 @@ export default function DashboardPage() {
               return (
                 <div
                   key={room.id}
-                  className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)] group"
+                  className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-all hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)] group animate-slide-left"
                   style={{
                     minHeight: 72,
                     borderBottom: isLast ? "none" : "1px solid var(--border-subtle)",
+                    animationDelay: `${i * 50}ms`,
                   }}
                   onClick={() => router.push(`/room/${room.code}`)}
                 >
-                  {/* Icon */}
                   <div
-                    className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                    className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all"
                     style={{
                       background: isActive ? "var(--go-dim)" : "var(--surface-2)",
                       boxShadow: isActive ? "0 0 0 1px var(--go-glow)" : "none",
@@ -304,7 +309,6 @@ export default function DashboardPage() {
                     }
                   </div>
 
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm truncate mb-0.5">{room.name}</div>
                     <div className="flex items-center gap-2">
@@ -313,7 +317,7 @@ export default function DashboardPage() {
                       </span>
                       {isActive && (
                         <span
-                          className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md"
+                          className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md animate-fade-in"
                           style={{ background: "var(--go-dim)", color: "var(--go)" }}
                         >
                           LIVE
@@ -322,18 +326,17 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}
-                      className="md:opacity-0 md:group-hover:opacity-100 p-2 rounded-lg transition-all"
+                      className="md:opacity-0 md:group-hover:opacity-100 p-2 rounded-lg transition-all btn-press"
                       style={{ color: "var(--text-muted)" }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
                     >
                       <Trash2 size={14} />
                     </button>
-                    <ChevronRight size={14} style={{ color: "var(--text-muted)" }} />
+                    <ChevronRight size={14} className="transition-transform group-hover:translate-x-0.5" style={{ color: "var(--text-muted)" }} />
                   </div>
                 </div>
               );
