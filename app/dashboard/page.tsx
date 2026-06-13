@@ -91,14 +91,19 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 md:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-black tracking-tight mb-0.5">Dashboard</h1>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+    <div className="max-w-2xl mx-auto">
+      {/* Mobile-style sticky page header */}
+      <div
+        className="sticky top-0 z-10 px-4 pt-5 pb-4 md:px-8 md:pt-8 md:pb-6"
+        style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}
+      >
+        <h1 className="text-2xl font-black tracking-tight">Dashboard</h1>
+        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
           Manage rooms and active trips
         </p>
       </div>
+
+      <div className="px-4 md:px-8 py-5 md:py-8">
 
       {/* Live trip banner */}
       {activeTrips.length > 0 && (
@@ -243,7 +248,7 @@ export default function DashboardPage() {
               return (
                 <div
                   key={room.id}
-                  className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[var(--surface-2)] group"
+                  className="flex items-center gap-4 px-5 py-4 md:py-4 min-h-[68px] cursor-pointer transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)] group"
                   onClick={() => router.push(`/room/${room.code}`)}
                 >
                   {/* Icon */}
@@ -276,7 +281,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}
-                      className="opacity-0 group-hover:opacity-100 p-2 rounded transition-all hover:bg-red-500/10"
+                      className="md:opacity-0 md:group-hover:opacity-100 p-2 rounded transition-all hover:bg-red-500/10 active:bg-red-500/10"
                       style={{ color: "var(--danger)" }}
                     >
                       <Trash2 size={13} />
@@ -288,6 +293,7 @@ export default function DashboardPage() {
             })}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

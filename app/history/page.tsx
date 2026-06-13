@@ -110,12 +110,17 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 md:px-8 py-8">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-black tracking-tight mb-0.5">History</h1>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>{trips.length} trips recorded</p>
+    <div className="max-w-2xl mx-auto">
+      {/* Mobile-style sticky header */}
+      <div
+        className="sticky top-0 z-10 px-4 pt-5 pb-4 md:px-8 md:pt-8 md:pb-6"
+        style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}
+      >
+        <h1 className="text-2xl font-black tracking-tight">History</h1>
+        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>{trips.length} trips recorded</p>
       </div>
+
+      <div className="px-4 md:px-8 py-5 md:py-8">
 
       {/* Filter tabs */}
       <div
@@ -163,7 +168,7 @@ export default function HistoryPage() {
               <div key={trip.id}>
                 {/* Trip row */}
                 <div
-                  className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[var(--surface-2)]"
+                  className="flex items-center gap-4 px-5 py-4 min-h-[68px] cursor-pointer transition-colors hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)]"
                   onClick={() => toggleExpand(trip)}
                 >
                   <div
@@ -257,6 +262,7 @@ export default function HistoryPage() {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }
