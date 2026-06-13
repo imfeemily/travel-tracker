@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Hash, ArrowRight, Radio, Trash2, Loader2, MapPin, Clock, Navigation } from "lucide-react";
+import { Plus, Hash, ArrowRight, Radio, Trash2, Loader2, MapPin, Clock, Navigation, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Room, Trip } from "@/types";
 import { generateRoomCode } from "@/utils";
@@ -77,101 +77,146 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
+        <Loader2 size={20} className="animate-spin" style={{ color: "var(--text-muted)" }} />
       </div>
     );
   }
 
+  const inputClass = "w-full px-4 py-3 text-sm outline-none transition-colors";
+  const inputStyle = {
+    background: "var(--surface-2)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius)",
+    color: "var(--text)",
+  };
+
   return (
-    <div className="p-4 md:p-10 max-w-5xl">
+    <div className="max-w-2xl mx-auto px-4 md:px-8 py-8">
       {/* Header */}
-      <div className="mb-6 md:mb-10">
-        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1">Dashboard</h1>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Manage your tracking rooms and active trips</p>
+      <div className="mb-8">
+        <h1 className="text-2xl font-black tracking-tight mb-0.5">Dashboard</h1>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          Manage rooms and active trips
+        </p>
       </div>
 
-      {/* Active trips banner */}
+      {/* Live trip banner */}
       {activeTrips.length > 0 && (
-        <div className="mb-8 p-4 rounded-2xl flex items-center gap-4 animate-fade-in" style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-glow)" }}>
+        <div
+          className="flex items-center gap-3 px-4 py-3.5 mb-6 animate-fade-in"
+          style={{ background: "var(--go-dim)", border: "1px solid rgba(6,193,103,0.2)", borderRadius: "var(--radius)" }}
+        >
           <div className="relative flex-shrink-0">
-            <div className="w-3 h-3 rounded-full" style={{ background: "var(--accent)" }} />
-            <div className="absolute inset-0 w-3 h-3 rounded-full animate-ping" style={{ background: "var(--accent)", opacity: 0.5 }} />
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--go)" }} />
+            <div className="absolute inset-0 w-2.5 h-2.5 rounded-full animate-ping opacity-60" style={{ background: "var(--go)" }} />
           </div>
-          <p className="text-sm font-semibold flex-1" style={{ color: "var(--accent)" }}>
-            {activeTrips.length} active trip{activeTrips.length > 1 ? "s" : ""} in progress
+          <p className="text-sm font-semibold flex-1" style={{ color: "var(--go)" }}>
+            {activeTrips.length} trip{activeTrips.length > 1 ? "s" : ""} in progress
           </p>
-          <Link href={`/room/${rooms.find(r => activeTrips.some(t => t.room_id === r.id))?.code ?? ""}`}
-            className="text-xs font-bold flex items-center gap-1" style={{ color: "var(--accent)" }}>
-            View <ArrowRight size={12} />
+          <Link
+            href={`/room/${rooms.find(r => activeTrips.some(t => t.room_id === r.id))?.code ?? ""}`}
+            className="text-xs font-bold flex items-center gap-1"
+            style={{ color: "var(--go)" }}
+          >
+            View <ArrowRight size={11} />
           </Link>
         </div>
       )}
 
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4 mb-8 md:mb-10">
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3 mb-8">
         {[
-          { icon: MapPin, label: "Total rooms", value: rooms.length },
-          { icon: Navigation, label: "Active trips", value: activeTrips.length },
-          { icon: Clock, label: "Tracking", value: activeTrips.length > 0 ? "Live" : "Idle" },
+          { icon: MapPin, label: "Rooms", value: rooms.length },
+          { icon: Navigation, label: "Active", value: activeTrips.length },
+          { icon: Clock, label: "Status", value: activeTrips.length > 0 ? "Live" : "Idle" },
         ].map(({ icon: Icon, label, value }) => (
-          <div key={label} className="p-4 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <Icon size={16} className="mb-2" style={{ color: "var(--accent)" }} />
-            <div className="text-2xl font-extrabold mono">{value}</div>
-            <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{label}</div>
+          <div
+            key={label}
+            className="px-4 py-4"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}
+          >
+            <Icon size={14} className="mb-3" style={{ color: "var(--text-muted)" }} />
+            <div className="text-xl font-black tracking-tight">{value}</div>
+            <div className="text-xs mt-0.5 font-medium" style={{ color: "var(--text-muted)" }}>{label}</div>
           </div>
         ))}
       </div>
 
       {/* Join room */}
-      <div className="mb-6 md:mb-8 p-4 md:p-6 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <h2 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: "var(--text-dim)" }}>
-          <Hash size={14} /> Join a room
-        </h2>
-        <div className="flex gap-3">
+      <div
+        className="p-5 mb-6"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)" }}
+      >
+        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+          Join a room
+        </p>
+        <div className="flex gap-2">
           <input
             value={joinCode}
             onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setJoinError(""); }}
-            placeholder="Enter room code"
+            placeholder="Room code"
             maxLength={6}
-            className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none mono tracking-widest font-bold"
-            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)" }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
+            className={`${inputClass} mono tracking-widest font-bold flex-1`}
+            style={inputStyle}
+            onFocus={(e) => (e.target.style.borderColor = "var(--text)")}
             onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
             onKeyDown={(e) => e.key === "Enter" && joinRoom()}
           />
-          <button onClick={joinRoom} disabled={joining || !joinCode.trim()}
-            className="px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-50 transition-all hover:opacity-90"
-            style={{ background: "var(--accent)", color: "white" }}>
-            {joining ? <Loader2 size={14} className="animate-spin" /> : <><Radio size={14} /> Join</>}
+          <button
+            onClick={joinRoom}
+            disabled={joining || !joinCode.trim()}
+            className="px-5 py-3 text-sm font-bold flex items-center gap-2 transition-opacity hover:opacity-80 disabled:opacity-30"
+            style={{ background: "var(--text)", color: "var(--bg)", borderRadius: "var(--radius)" }}
+          >
+            {joining ? <Loader2 size={14} className="animate-spin" /> : <><Radio size={13} /> Join</>}
           </button>
         </div>
-        {joinError && <p className="text-xs mt-2 mono" style={{ color: "var(--danger)" }}>{joinError}</p>}
+        {joinError && (
+          <p className="text-xs mt-2 font-medium" style={{ color: "var(--danger)" }}>{joinError}</p>
+        )}
       </div>
 
       {/* Rooms list */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-lg">Your rooms</h2>
-          <button onClick={() => setShowCreate(!showCreate)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
-            style={{ background: showCreate ? "var(--surface-2)" : "var(--accent-dim)", color: showCreate ? "var(--text)" : "var(--accent)", border: "1px solid var(--border)" }}>
-            <Plus size={14} /> New room
+          <h2 className="font-black text-base tracking-tight">Your rooms</h2>
+          <button
+            onClick={() => setShowCreate(!showCreate)}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold transition-colors"
+            style={{
+              background: showCreate ? "var(--surface-2)" : "var(--text)",
+              color: showCreate ? "var(--text)" : "var(--bg)",
+              borderRadius: "var(--radius)",
+              border: showCreate ? "1px solid var(--border)" : "none",
+            }}
+          >
+            <Plus size={13} /> New room
           </button>
         </div>
 
         {/* Create form */}
         {showCreate && (
-          <div className="mb-4 p-4 rounded-2xl animate-slide-up" style={{ background: "var(--surface)", border: "1px solid var(--accent-glow)" }}>
-            <div className="flex gap-3">
-              <input value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} placeholder="Room name e.g. Morning run"
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none"
-                style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)" }}
-                onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
+          <div
+            className="mb-4 p-4 animate-slide-up"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}
+          >
+            <div className="flex gap-2">
+              <input
+                value={newRoomName}
+                onChange={(e) => setNewRoomName(e.target.value)}
+                placeholder="Room name e.g. School run"
+                className={`${inputClass} flex-1`}
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "var(--text)")}
                 onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
-                onKeyDown={(e) => e.key === "Enter" && createRoom()} />
-              <button onClick={createRoom} disabled={creating || !newRoomName.trim()}
-                className="px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-50 transition-all hover:opacity-90"
-                style={{ background: "var(--accent)", color: "white" }}>
+                onKeyDown={(e) => e.key === "Enter" && createRoom()}
+              />
+              <button
+                onClick={createRoom}
+                disabled={creating || !newRoomName.trim()}
+                className="px-5 py-3 text-sm font-bold transition-opacity hover:opacity-80 disabled:opacity-30"
+                style={{ background: "var(--text)", color: "var(--bg)", borderRadius: "var(--radius)" }}
+              >
                 {creating ? <Loader2 size={14} className="animate-spin" /> : "Create"}
               </button>
             </div>
@@ -179,38 +224,64 @@ export default function DashboardPage() {
         )}
 
         {rooms.length === 0 ? (
-          <div className="py-16 text-center rounded-2xl" style={{ border: "1px dashed var(--border)" }}>
-            <MapPin size={32} className="mx-auto mb-3 opacity-30" />
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>No rooms yet — create one to start tracking</p>
+          <div
+            className="py-16 text-center"
+            style={{ border: "1px dashed var(--border)", borderRadius: "var(--radius-lg)" }}
+          >
+            <MapPin size={28} className="mx-auto mb-3" style={{ color: "var(--text-muted)", opacity: 0.4 }} />
+            <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
+              No rooms yet — create one to start
+            </p>
           </div>
         ) : (
-          <div className="grid gap-3">
+          <div
+            className="uber-list overflow-hidden"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)" }}
+          >
             {rooms.map((room) => {
               const isActive = activeTrips.some((t) => t.room_id === room.id);
               return (
-                <div key={room.id} className="p-5 rounded-2xl flex items-center gap-4 group hover:border-[var(--accent)] transition-all cursor-pointer"
-                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-                  onClick={() => router.push(`/room/${room.code}`)}>
-                  <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: isActive ? "var(--accent-dim)" : "var(--surface-2)" }}>
+                <div
+                  key={room.id}
+                  className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[var(--surface-2)] group"
+                  onClick={() => router.push(`/room/${room.code}`)}
+                >
+                  {/* Icon */}
+                  <div
+                    className="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center"
+                    style={{ background: isActive ? "var(--go-dim)" : "var(--surface-2)" }}
+                  >
                     {isActive
-                      ? <Radio size={18} style={{ color: "var(--accent)" }} className="animate-pulse-accent" />
-                      : <MapPin size={18} style={{ color: "var(--text-muted)" }} />}
+                      ? <Radio size={15} style={{ color: "var(--go)" }} className="animate-pulse-accent" />
+                      : <MapPin size={15} style={{ color: "var(--text-muted)" }} />
+                    }
                   </div>
+
+                  {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm">{room.name}</div>
-                    <div className="text-xs mono mt-0.5" style={{ color: "var(--text-muted)" }}>
-                      Code: <span style={{ color: "var(--accent)" }}>{room.code}</span>
-                      {isActive && <span className="ml-2" style={{ color: "var(--accent)" }}>● LIVE</span>}
+                    <div className="font-semibold text-sm truncate">{room.name}</div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs mono font-bold" style={{ color: "var(--text-muted)" }}>
+                        {room.code}
+                      </span>
+                      {isActive && (
+                        <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--go)" }}>
+                          ● LIVE
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}
-                      className="opacity-0 group-hover:opacity-100 p-2 rounded-lg transition-all hover:bg-red-500/10"
-                      style={{ color: "var(--danger)" }}>
-                      <Trash2 size={14} />
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}
+                      className="opacity-0 group-hover:opacity-100 p-2 rounded transition-all hover:bg-red-500/10"
+                      style={{ color: "var(--danger)" }}
+                    >
+                      <Trash2 size={13} />
                     </button>
-                    <ArrowRight size={16} style={{ color: "var(--text-muted)" }} />
+                    <ChevronRight size={15} style={{ color: "var(--text-muted)" }} />
                   </div>
                 </div>
               );

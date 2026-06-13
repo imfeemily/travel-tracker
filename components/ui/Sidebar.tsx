@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Heart, LayoutDashboard, History, Settings, LogOut, Radio } from "lucide-react";
+import { LayoutDashboard, History, Settings, LogOut, Radio, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import clsx from "clsx";
 
@@ -27,24 +27,28 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop sidebar */}
+      {/* ── Desktop sidebar ── */}
       <aside
-        className="hidden md:flex fixed left-0 top-0 h-screen w-56 flex-col py-6 px-4 z-50"
+        className="hidden md:flex fixed left-0 top-0 h-screen w-60 flex-col z-50"
         style={{ background: "var(--surface)", borderRight: "1px solid var(--border)" }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-1 mb-8">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "var(--accent)", boxShadow: "0 0 16px var(--accent-glow)" }}
-          >
-            <Heart size={14} color="white" strokeWidth={2.5} fill="white" />
+        <div className="px-6 py-5 border-b" style={{ borderColor: "var(--border)" }}>
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
+              style={{ background: "var(--text)" }}
+            >
+              <MapPin size={15} color="var(--bg)" strokeWidth={2.5} />
+            </div>
+            <span className="text-base font-black tracking-tight" style={{ color: "var(--text)" }}>
+              TrackR
+            </span>
           </div>
-          <span className="text-base font-extrabold tracking-tight">FamilyTrackr</span>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 flex flex-col gap-1">
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
           {NAV.map(({ href, icon: Icon, label }) => {
             const active = pathname.startsWith(href);
             return (
@@ -52,44 +56,49 @@ export function Sidebar() {
                 key={href}
                 href={href}
                 className={clsx(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                  "flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors",
                   active
-                    ? "text-[var(--accent)]"
-                    : "hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)]"
+                    ? "font-semibold"
+                    : "hover:bg-[var(--surface-2)]"
                 )}
-                style={active ? { background: "var(--accent-dim)" } : {}}
+                style={{
+                  color: active ? "var(--text)" : "var(--text-muted)",
+                  background: active ? "var(--accent-dim)" : undefined,
+                }}
               >
-                <Icon size={18} className="flex-shrink-0" />
-                <span>{label}</span>
+                <Icon size={17} className="flex-shrink-0" />
+                {label}
               </Link>
             );
           })}
 
           {isRoom && (
             <div
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium"
-              style={{ background: "rgba(168,85,247,0.08)", color: "var(--accent)" }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold"
+              style={{ background: "var(--go-dim)", color: "var(--go)" }}
             >
-              <Radio size={18} className="animate-pulse-accent flex-shrink-0" />
-              <span>Live room</span>
+              <Radio size={17} className="animate-pulse-accent flex-shrink-0" />
+              Live room
             </div>
           )}
         </nav>
 
         {/* Sign out */}
-        <button
-          onClick={signOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-[var(--surface-2)]"
-          style={{ color: "var(--text-muted)" }}
-        >
-          <LogOut size={18} className="flex-shrink-0" />
-          <span>Sign out</span>
-        </button>
+        <div className="px-3 pb-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
+          <button
+            onClick={signOut}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors hover:bg-[var(--surface-2)]"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <LogOut size={17} className="flex-shrink-0" />
+            Sign out
+          </button>
+        </div>
       </aside>
 
-      {/* Mobile bottom nav */}
+      {/* ── Mobile bottom nav ── */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 py-2 safe-area-inset-bottom"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center"
         style={{ background: "var(--surface)", borderTop: "1px solid var(--border)" }}
       >
         {NAV.map(({ href, icon: Icon, label }) => {
@@ -98,10 +107,10 @@ export function Sidebar() {
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all min-w-0"
-              style={{ color: active ? "var(--accent)" : "var(--text-muted)" }}
+              className="flex-1 flex flex-col items-center gap-1 py-3 transition-colors"
+              style={{ color: active ? "var(--text)" : "var(--text-muted)" }}
             >
-              <Icon size={20} />
+              <Icon size={20} strokeWidth={active ? 2.5 : 1.75} />
               <span className="text-[10px] font-semibold">{label}</span>
             </Link>
           );
@@ -109,20 +118,20 @@ export function Sidebar() {
 
         {isRoom && (
           <div
-            className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl"
-            style={{ color: "var(--accent)" }}
+            className="flex-1 flex flex-col items-center gap-1 py-3"
+            style={{ color: "var(--go)" }}
           >
-            <Radio size={20} className="animate-pulse-accent" />
+            <Radio size={20} strokeWidth={2.5} className="animate-pulse-accent" />
             <span className="text-[10px] font-semibold">Live</span>
           </div>
         )}
 
         <button
           onClick={signOut}
-          className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all"
+          className="flex-1 flex flex-col items-center gap-1 py-3 transition-colors"
           style={{ color: "var(--text-muted)" }}
         >
-          <LogOut size={20} />
+          <LogOut size={20} strokeWidth={1.75} />
           <span className="text-[10px] font-semibold">Sign out</span>
         </button>
       </nav>
