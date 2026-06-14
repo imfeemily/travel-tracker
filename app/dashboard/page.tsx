@@ -10,10 +10,12 @@ import { createClient } from "@/lib/supabase/client";
 import { Room, Trip } from "@/types";
 import { generateRoomCode } from "@/utils";
 import Link from "next/link";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function DashboardPage() {
   const supabase = createClient();
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [activeTrips, setActiveTrips] = useState<Trip[]>([]);
@@ -69,7 +71,7 @@ export default function DashboardPage() {
     setJoining(true);
     setJoinError("");
     const { data } = await supabase.from("rooms").select("*").eq("code", joinCode.trim().toUpperCase()).single();
-    if (!data) { setJoinError("Room not found — check the code and try again"); setJoining(false); return; }
+    if (!data) { setJoinError(t("join_not_found")); setJoining(false); return; }
     router.push(`/room/${data.code}`);
   }
 
@@ -83,10 +85,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center animate-float"
-            style={{ background: "var(--go-dim)" }}
-          >
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center animate-float" style={{ background: "var(--go-dim)" }}>
             <MapPin size={18} style={{ color: "var(--go)" }} />
           </div>
           <Loader2 size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
@@ -100,240 +99,144 @@ export default function DashboardPage() {
   return (
     <div className="max-w-xl mx-auto pb-28 md:pb-8">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="px-5 pt-8 pb-6 md:px-8 md:pt-10 animate-slide-down">
         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
           {userEmail ? userEmail.split("@")[0] : "Dashboard"}
         </p>
-        <h1 className="text-3xl font-black tracking-tight">Good to go.</h1>
+        <h1 className="text-3xl font-black tracking-tight">{t("dash_greeting")}</h1>
       </div>
 
-      {/* ── Live banner ── */}
+      {/* Live banner */}
       {activeTrips.length > 0 && activeRoom && (
         <div className="px-5 md:px-8 mb-5 animate-scale-in">
-          <Link
-            href={`/room/${activeRoom.code}`}
-            className="flex items-center gap-4 px-5 py-4 rounded-2xl btn-glow"
-            style={{
-              background: "var(--go)",
-              boxShadow: "0 0 32px var(--go-glow)",
-            }}
-          >
+          <Link href={`/room/${activeRoom.code}`} className="flex items-center gap-4 px-5 py-4 rounded-2xl btn-glow" style={{ background: "var(--go)", boxShadow: "0 0 32px var(--go-glow)" }}>
             <span className="live-dot flex-shrink-0" style={{ background: "#000" }} />
             <div className="flex-1 min-w-0">
-              <p className="font-black text-sm" style={{ color: "#000" }}>Trip in progress</p>
-              <p className="text-xs font-medium mt-0.5 truncate" style={{ color: "rgba(0,0,0,0.6)" }}>
-                {activeRoom.name}
-              </p>
+              <p className="font-black text-sm" style={{ color: "#000" }}>{t("dash_live_banner")}</p>
+              <p className="text-xs font-medium mt-0.5 truncate" style={{ color: "rgba(0,0,0,0.6)" }}>{activeRoom.name}</p>
             </div>
             <ArrowUpRight size={18} style={{ color: "#000" }} className="flex-shrink-0" />
           </Link>
         </div>
       )}
 
-      {/* ── Stats row ── */}
+      {/* Stats row */}
       <div className="px-5 md:px-8 mb-6">
         <div className="grid grid-cols-3 gap-3 stagger-children">
           {[
-            { label: "Rooms", value: rooms.length, icon: MapPin },
-            { label: "Active", value: activeTrips.length, icon: Navigation, live: activeTrips.length > 0 },
-            { label: "Status", value: activeTrips.length > 0 ? "Live" : "Idle", icon: Clock, live: activeTrips.length > 0 },
+            { label: t("stat_rooms"), value: rooms.length, icon: MapPin },
+            { label: t("stat_active"), value: activeTrips.length, icon: Navigation, live: activeTrips.length > 0 },
+            { label: t("stat_status"), value: activeTrips.length > 0 ? t("stat_live") : t("stat_idle"), icon: Clock, live: activeTrips.length > 0 },
           ].map(({ label, value, icon: Icon, live }) => (
-            <div
-              key={label}
-              className="px-4 py-4 rounded-2xl card-hover animate-scale-in"
-              style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}
-            >
-              <Icon
-                size={13}
-                className={`mb-3 ${live ? "animate-float" : ""}`}
-                style={{ color: live ? "var(--go)" : "var(--text-muted)" }}
-              />
-              <div
-                className="text-2xl font-black tracking-tight leading-none mb-1"
-                style={{ color: live ? "var(--go)" : "var(--text)" }}
-              >
-                {value}
-              </div>
+            <div key={label} className="px-4 py-4 rounded-2xl card-hover animate-scale-in" style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}>
+              <Icon size={13} className={`mb-3 ${live ? "animate-float" : ""}`} style={{ color: live ? "var(--go)" : "var(--text-muted)" }} />
+              <div className="text-2xl font-black tracking-tight leading-none mb-1" style={{ color: live ? "var(--go)" : "var(--text)" }}>{value}</div>
               <div className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>{label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Join room ── */}
+      {/* Join room */}
       <div className="px-5 md:px-8 mb-6 animate-slide-up" style={{ animationDelay: "200ms" }}>
-        <div
-          className="rounded-2xl overflow-hidden card-hover"
-          style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}
-        >
+        <div className="rounded-2xl overflow-hidden card-hover" style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}>
           <div className="px-5 pt-4 pb-3">
-            <p className="text-xs font-black uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-              Join a room
-            </p>
+            <p className="text-xs font-black uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>{t("join_title")}</p>
           </div>
           <div className="px-4 pb-4 flex gap-2">
             <input
               value={joinCode}
               onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setJoinError(""); }}
-              placeholder="Enter 6-char code"
+              placeholder={t("join_placeholder")}
               maxLength={6}
               className="flex-1 px-4 py-3.5 text-sm input-glow mono tracking-[0.2em] font-bold"
-              style={{
-                background: "var(--surface-2)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius)",
-                color: "var(--text)",
-                outline: "none",
-              }}
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius)", color: "var(--text)", outline: "none" }}
               onKeyDown={(e) => e.key === "Enter" && joinRoom()}
             />
-            <button
-              onClick={joinRoom}
-              disabled={joining || joinCode.trim().length !== 6}
+            <button onClick={joinRoom} disabled={joining || joinCode.trim().length !== 6}
               className="px-5 py-3.5 text-sm font-bold flex items-center gap-2 disabled:opacity-30 btn-glow rounded-xl"
-              style={{ background: "var(--go)", color: "#000" }}
-            >
+              style={{ background: "var(--go)", color: "#000" }}>
               {joining ? <Loader2 size={14} className="animate-spin" /> : <Radio size={14} />}
-              Join
+              {t("join_btn")}
             </button>
           </div>
-          {joinError && (
-            <p className="px-5 pb-4 text-xs font-medium animate-slide-up" style={{ color: "var(--danger)" }}>
-              {joinError}
-            </p>
-          )}
+          {joinError && <p className="px-5 pb-4 text-xs font-medium animate-slide-up" style={{ color: "var(--danger)" }}>{joinError}</p>}
         </div>
       </div>
 
-      {/* ── Rooms ── */}
+      {/* Rooms */}
       <div className="px-5 md:px-8 animate-slide-up" style={{ animationDelay: "280ms" }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-black text-base tracking-tight">Your rooms</h2>
-          <button
-            onClick={() => setShowCreate(!showCreate)}
+          <h2 className="font-black text-base tracking-tight">{t("rooms_title")}</h2>
+          <button onClick={() => setShowCreate(!showCreate)}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl btn-press"
             style={showCreate
               ? { background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }
-              : { background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }
-            }
-          >
+              : { background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}>
             {showCreate ? <X size={13} /> : <Plus size={13} />}
-            {showCreate ? "Cancel" : "New room"}
+            {showCreate ? t("rooms_cancel") : t("rooms_new")}
           </button>
         </div>
 
-        {/* Create form */}
         {showCreate && (
-          <div
-            className="mb-4 p-4 rounded-2xl animate-scale-in"
-            style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}
-          >
-            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
-              Room name
-            </p>
+          <div className="mb-4 p-4 rounded-2xl animate-scale-in" style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>{t("rooms_name_label")}</p>
             <div className="flex gap-2">
-              <input
-                value={newRoomName}
-                onChange={(e) => setNewRoomName(e.target.value)}
-                placeholder="e.g. School run, Family trip"
-                autoFocus
+              <input value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)}
+                placeholder={t("rooms_name_placeholder")} autoFocus
                 className="flex-1 px-4 py-3 text-sm input-glow"
-                style={{
-                  background: "var(--surface-2)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius)",
-                  color: "var(--text)",
-                  outline: "none",
-                }}
-                onKeyDown={(e) => e.key === "Enter" && createRoom()}
-              />
-              <button
-                onClick={createRoom}
-                disabled={creating || !newRoomName.trim()}
+                style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius)", color: "var(--text)", outline: "none" }}
+                onKeyDown={(e) => e.key === "Enter" && createRoom()} />
+              <button onClick={createRoom} disabled={creating || !newRoomName.trim()}
                 className="px-5 py-3 text-sm font-bold disabled:opacity-30 btn-glow rounded-xl"
-                style={{ background: "var(--go)", color: "#000" }}
-              >
-                {creating ? <Loader2 size={14} className="animate-spin" /> : "Create"}
+                style={{ background: "var(--go)", color: "#000" }}>
+                {creating ? <Loader2 size={14} className="animate-spin" /> : t("rooms_create")}
               </button>
             </div>
           </div>
         )}
 
-        {/* Rooms list */}
         {rooms.length === 0 ? (
-          <div
-            className="py-16 text-center rounded-2xl animate-fade-in"
-            style={{ border: "1px dashed var(--border)", background: "var(--surface)" }}
-          >
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float"
-              style={{ background: "var(--go-dim)" }}
-            >
+          <div className="py-16 text-center rounded-2xl animate-fade-in" style={{ border: "1px dashed var(--border)", background: "var(--surface)" }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float" style={{ background: "var(--go-dim)" }}>
               <MapPin size={22} style={{ color: "var(--go)" }} />
             </div>
-            <p className="text-sm font-semibold mb-1">No rooms yet</p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Create a room to start tracking
-            </p>
+            <p className="text-sm font-semibold mb-1">{t("rooms_empty_title")}</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>{t("rooms_empty_body")}</p>
           </div>
         ) : (
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}
-          >
+          <div className="rounded-2xl overflow-hidden" style={{ background: "var(--surface)", boxShadow: "var(--shadow-card)" }}>
             {rooms.map((room, i) => {
-              const isActive = activeTrips.some((t) => t.room_id === room.id);
+              const isActive = activeTrips.some((trip) => trip.room_id === room.id);
               const isLast = i === rooms.length - 1;
               return (
-                <div
-                  key={room.id}
-                  className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-all hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)] group animate-slide-left"
-                  style={{
-                    minHeight: 72,
-                    borderBottom: isLast ? "none" : "1px solid var(--border-subtle)",
-                    animationDelay: `${i * 50}ms`,
-                  }}
-                  onClick={() => router.push(`/room/${room.code}`)}
-                >
-                  <div
-                    className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all"
-                    style={{
-                      background: isActive ? "var(--go-dim)" : "var(--surface-2)",
-                      boxShadow: isActive ? "0 0 0 1px var(--go-glow)" : "none",
-                    }}
-                  >
+                <div key={room.id} className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-all hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)] group animate-slide-left"
+                  style={{ minHeight: 72, borderBottom: isLast ? "none" : "1px solid var(--border-subtle)", animationDelay: `${i * 50}ms` }}
+                  onClick={() => router.push(`/room/${room.code}`)}>
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+                    style={{ background: isActive ? "var(--go-dim)" : "var(--surface-2)", boxShadow: isActive ? "0 0 0 1px var(--go-glow)" : "none" }}>
                     {isActive
                       ? <Radio size={16} style={{ color: "var(--go)" }} className="animate-pulse-go" />
-                      : <MapPin size={16} style={{ color: "var(--text-muted)" }} />
-                    }
+                      : <MapPin size={16} style={{ color: "var(--text-muted)" }} />}
                   </div>
-
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm truncate mb-0.5">{room.name}</div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs mono font-bold" style={{ color: "var(--text-muted)" }}>
-                        {room.code}
-                      </span>
+                      <span className="text-xs mono font-bold" style={{ color: "var(--text-muted)" }}>{room.code}</span>
                       {isActive && (
-                        <span
-                          className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md animate-fade-in"
-                          style={{ background: "var(--go-dim)", color: "var(--go)" }}
-                        >
-                          LIVE
+                        <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md animate-fade-in" style={{ background: "var(--go-dim)", color: "var(--go)" }}>
+                          {t("stat_live")}
                         </span>
                       )}
                     </div>
                   </div>
-
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}
+                    <button onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}
                       className="md:opacity-0 md:group-hover:opacity-100 p-2 rounded-lg transition-all btn-press"
                       style={{ color: "var(--text-muted)" }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
-                    >
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}>
                       <Trash2 size={14} />
                     </button>
                     <ChevronRight size={14} className="transition-transform group-hover:translate-x-0.5" style={{ color: "var(--text-muted)" }} />

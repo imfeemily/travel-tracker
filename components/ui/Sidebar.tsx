@@ -5,17 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, History, Settings, LogOut, Radio, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
-
-const NAV = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
-  { href: "/history", icon: History, label: "Trips" },
-  { href: "/settings", icon: Settings, label: "Settings" },
-];
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLanguage();
   const [userInitial, setUserInitial] = useState("?");
   const [mounted, setMounted] = useState(false);
 
@@ -31,6 +27,12 @@ export function Sidebar() {
     router.push("/auth/login");
     router.refresh();
   }
+
+  const NAV = [
+    { href: "/dashboard", icon: LayoutDashboard, label: t("nav_home") },
+    { href: "/history", icon: History, label: t("nav_trips") },
+    { href: "/settings", icon: Settings, label: t("nav_settings") },
+  ];
 
   const isRoom = pathname.startsWith("/room");
 
@@ -58,7 +60,7 @@ export function Sidebar() {
             </div>
             <div>
               <div className="text-sm font-black tracking-tight" style={{ color: "var(--text)" }}>TrackR</div>
-              <div className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>GPS Tracker</div>
+              <div className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>{t("nav_gps_tracker")}</div>
             </div>
           </div>
         </div>
@@ -106,7 +108,7 @@ export function Sidebar() {
               style={{ background: "var(--go-dim)", color: "var(--go)" }}
             >
               <Radio size={18} className="animate-pulse-go flex-shrink-0" strokeWidth={2.5} />
-              Live room
+              {t("nav_live_room")}
               <span className="live-dot ml-auto" style={{ width: 6, height: 6 }} />
             </div>
           )}
@@ -131,7 +133,7 @@ export function Sidebar() {
             style={{ color: "var(--text-muted)" }}
           >
             <LogOut size={16} className="flex-shrink-0" strokeWidth={1.75} />
-            Sign out
+            {t("nav_sign_out")}
           </button>
         </div>
       </aside>
@@ -183,7 +185,7 @@ export function Sidebar() {
                 style={{ width: 28, height: 2.5, background: "var(--go)", boxShadow: "0 0 8px var(--go-glow)" }}
               />
               <Radio size={21} strokeWidth={2.5} className="animate-pulse-go" />
-              <span className="text-[10px] font-semibold">Live</span>
+              <span className="text-[10px] font-semibold">{t("nav_live_room")}</span>
             </div>
           ) : (
             <button
@@ -192,7 +194,7 @@ export function Sidebar() {
               style={{ color: "var(--text-muted)" }}
             >
               <LogOut size={21} strokeWidth={1.75} />
-              <span className="text-[10px] font-semibold">Sign out</span>
+              <span className="text-[10px] font-semibold">{t("nav_sign_out")}</span>
             </button>
           )}
         </div>

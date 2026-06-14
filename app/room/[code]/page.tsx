@@ -13,6 +13,7 @@ import { useGeolocation } from "@/lib/hooks/useGeolocation";
 import { useRealtimeTracking } from "@/lib/hooks/useRealtimeTracking";
 import { Room, Trip, LocationPoint } from "@/types";
 import { formatDuration, formatDistance, calculateDistance } from "@/utils";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const TrackingMap = dynamic(
   () => import("@/components/map/TrackingMap").then((m) => m.TrackingMap),
@@ -33,6 +34,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   const { code } = use(params);
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLanguage();
 
   const [room, setRoom] = useState<Room | null>(null);
   const [activeTrip, setActiveTrip] = useState<Trip | null>(null);
@@ -50,18 +52,12 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   const isOwner = room?.owner_id === userId;
 
-  // ── Location permission + initial position ───────────────────────────────
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) return;
     setPermState("requesting");
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCurrentLocation([pos.coords.latitude, pos.coords.longitude]);
-        setPermState("granted");
-      },
-      (err) => {
-        setPermState(err.code === err.PERMISSION_DENIED ? "denied" : "granted");
-      },
+      (pos) => { setCurrentLocation([pos.coords.latitude, pos.coords.longitude]); setPermState("granted"); },
+      (err) => { setPermState(err.code === err.PERMISSION_DENIED ? "denied" : "granted"); },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
     );
   }, []);
@@ -69,16 +65,11 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { requestLocation(); }, [requestLocation]);
 
-  // ── Trip point saving ─────────────────────────────────────────────────────
   const savePoint = useCallback(
     async (lat: number, lng: number, accuracy: number | null) => {
       if (!activeTrip) return;
       setCurrentLocation([lat, lng]);
-      await supabase.from("location_points").insert({
-        trip_id: activeTrip.id,
-        lat, lng, accuracy,
-        recorded_at: new Date().toISOString(),
-      });
+      await supabase.from("location_points").insert({ trip_id: activeTrip.id, lat, lng, accuracy, recorded_at: new Date().toISOString() });
     },
     [activeTrip, supabase]
   );
@@ -108,13 +99,11 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     if (!roomData) { router.push("/dashboard"); return; }
     setRoom(roomData);
 
-    const { data: tripData } = await supabase
-      .from("trips").select("*").eq("room_id", roomData.id).eq("status", "active").maybeSingle();
+    const { data: tripData } = await supabase.from("trips").select("*").eq("room_id", roomData.id).eq("status", "active").maybeSingle();
 
     if (tripData) {
       setActiveTrip(tripData);
-      const { data: pts } = await supabase
-        .from("location_points").select("*").eq("trip_id", tripData.id).order("recorded_at", { ascending: true });
+      const { data: pts } = await supabase.from("location_points").select("*").eq("trip_id", tripData.id).order("recorded_at", { ascending: true });
       const loaded = pts ?? [];
       setPoints(loaded);
       if (loaded.length > 1) {
@@ -133,18 +122,12 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   useEffect(() => {
     if (!activeTrip) return;
-    const t = setInterval(() => setElapsed(formatDuration(activeTrip.started_at)), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setElapsed(formatDuration(activeTrip.started_at)), 1000);
+    return () => clearInterval(timer);
   }, [activeTrip]);
 
-  // Start/stop geo tracking in sync with activeTrip state
   useEffect(() => {
-    if (activeTrip) {
-      geo.start();
-    } else {
-      geo.stop();
-    }
-    // geo.start/stop are stable — intentionally omitting geo from deps
+    if (activeTrip) { geo.start(); } else { geo.stop(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTrip]);
 
@@ -152,14 +135,12 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     if (!room || !userId) return;
     if (permState !== "granted") { requestLocation(); return; }
     setStartingTrip(true);
-    const { data: trip } = await supabase
-      .from("trips").insert({ room_id: room.id, user_id: userId, status: "active" }).select().single();
+    const { data: trip } = await supabase.from("trips").insert({ room_id: room.id, user_id: userId, status: "active" }).select().single();
     if (trip) {
       await supabase.from("rooms").update({ is_active: true }).eq("id", room.id);
       setActiveTrip(trip);
       setPoints([]);
       setTotalDist(0);
-      // geo.start() is triggered by the useEffect above once activeTrip state commits
     }
     setStartingTrip(false);
   }
@@ -167,15 +148,9 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   async function stopTrip() {
     if (!activeTrip || !room) return;
     setStoppingTrip(true);
-    // geo.stop() is triggered by the useEffect above once activeTrip clears
-    await supabase.from("trips").update({
-      status: "ended",
-      ended_at: new Date().toISOString(),
-      distance_km: totalDist,
-      total_points: points.length,
-    }).eq("id", activeTrip.id);
+    await supabase.from("trips").update({ status: "ended", ended_at: new Date().toISOString(), distance_km: totalDist, total_points: points.length }).eq("id", activeTrip.id);
     await supabase.from("rooms").update({ is_active: false }).eq("id", room.id);
-    setActiveTrip(null); // triggers geo.stop() via useEffect
+    setActiveTrip(null);
     setPoints([]);
     setTotalDist(0);
     setStoppingTrip(false);
@@ -199,111 +174,63 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   if (!room) return null;
 
   return (
-    <div
-      className="relative overflow-hidden"
-      style={{ height: "100dvh", background: "var(--bg)" }}
-    >
-      {/* ── Full-screen map ── */}
+    <div className="relative overflow-hidden" style={{ height: "100dvh", background: "var(--bg)" }}>
+      {/* Full-screen map */}
       <div className="absolute inset-0">
-        <TrackingMap
-          points={points}
-          isLive={!!activeTrip}
-          currentLocation={currentLocation}
-          className="h-full w-full rounded-none"
-        />
+        <TrackingMap points={points} isLive={!!activeTrip} currentLocation={currentLocation} className="h-full w-full rounded-none" />
       </div>
 
-      {/* ── Permission denied banner ── */}
+      {/* Permission denied banner */}
       {permState === "denied" && (
-        <div
-          className="absolute top-4 left-4 right-4 flex items-start gap-3 px-4 py-3 animate-slide-up"
-          style={{ zIndex: 1100, background: "rgba(225,25,0,0.12)", border: "1px solid rgba(225,25,0,0.3)", borderRadius: "var(--radius-lg)" }}
-        >
+        <div className="absolute top-4 left-4 right-4 flex items-start gap-3 px-4 py-3 animate-slide-up"
+          style={{ zIndex: 1100, background: "rgba(225,25,0,0.12)", border: "1px solid rgba(225,25,0,0.3)", borderRadius: "var(--radius-lg)" }}>
           <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" style={{ color: "var(--danger)" }} />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold" style={{ color: "var(--danger)" }}>Location access denied</p>
-            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-              Enable location in your browser settings to track a trip
-            </p>
+            <p className="text-sm font-semibold" style={{ color: "var(--danger)" }}>{t("room_location_denied")}</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{t("room_location_denied_body")}</p>
           </div>
-          <button onClick={requestLocation} className="text-xs font-bold flex-shrink-0" style={{ color: "var(--danger)" }}>
-            Retry
-          </button>
+          <button onClick={requestLocation} className="text-xs font-bold flex-shrink-0" style={{ color: "var(--danger)" }}>{t("room_retry")}</button>
         </div>
       )}
 
-      {/* ── Top bar ── */}
-      <div
-        className="absolute left-4 right-4"
-        style={{ zIndex: 1000, top: permState === "denied" ? "5.5rem" : "1rem" }}
-      >
-        <div
-          className="flex items-center justify-between px-4 py-3"
-          style={{ background: "var(--surface)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}
-        >
+      {/* Top bar */}
+      <div className="absolute left-4 right-4" style={{ zIndex: 1000, top: permState === "denied" ? "5.5rem" : "1rem" }}>
+        <div className="flex items-center justify-between px-4 py-3"
+          style={{ background: "var(--surface)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2.5 min-w-0">
-            <button
-              onClick={() => router.push("/dashboard")}
+            <button onClick={() => router.push("/dashboard")}
               className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
-              style={{ background: "var(--surface-2)", color: "var(--text-muted)" }}
-            >
+              style={{ background: "var(--surface-2)", color: "var(--text-muted)" }}>
               <ArrowLeft size={13} />
             </button>
             {activeTrip
               ? <Radio size={14} className="animate-pulse-accent flex-shrink-0" style={{ color: "var(--go)" }} />
-              : <MapPin size={14} className="flex-shrink-0" style={{ color: "var(--text-muted)" }} />
-            }
+              : <MapPin size={14} className="flex-shrink-0" style={{ color: "var(--text-muted)" }} />}
             <span className="font-bold text-sm truncate">{room.name}</span>
             {activeTrip && (
-              <span
-                className="text-[10px] font-black uppercase tracking-wider flex-shrink-0 px-1.5 py-0.5 rounded"
-                style={{ background: "var(--go-dim)", color: "var(--go)" }}
-              >
-                LIVE
+              <span className="text-[10px] font-black uppercase tracking-wider flex-shrink-0 px-1.5 py-0.5 rounded"
+                style={{ background: "var(--go-dim)", color: "var(--go)" }}>
+                {t("room_live")}
               </span>
             )}
           </div>
-
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* GPS status */}
-            <div
-              className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium"
-              style={{
-                background: "var(--surface-2)",
-                borderRadius: "var(--radius-sm)",
-                color: activeTrip ? "var(--go)" : "var(--text-muted)",
-              }}
-            >
+            <div className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium"
+              style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", color: activeTrip ? "var(--go)" : "var(--text-muted)" }}>
               {activeTrip ? <Wifi size={11} /> : <WifiOff size={11} />}
-              <span className="hidden sm:inline">{activeTrip ? "Live" : "Off"}</span>
+              <span className="hidden sm:inline">{activeTrip ? t("room_live") : t("room_off")}</span>
             </div>
-
-            {/* Location button */}
             {permState === "granted" && currentLocation && (
-              <button
-                onClick={() => {
-                  // Pan map to current location — TrackingMap exposes no imperative API,
-                  // so we update currentLocation to trigger the existing effect
-                  setCurrentLocation([...currentLocation]);
-                }}
+              <button onClick={() => setCurrentLocation([...currentLocation])}
                 className="flex items-center justify-center w-8 h-8 transition-colors active:bg-[var(--surface-3)]"
                 style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", color: "var(--go)" }}
-                title="My location"
-              >
+                title="My location">
                 <LocateFixed size={13} />
               </button>
             )}
-
-            {/* Room code */}
-            <button
-              onClick={copyCode}
+            <button onClick={copyCode}
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold mono transition-colors active:opacity-70"
-              style={{
-                background: "var(--surface-2)",
-                borderRadius: "var(--radius-sm)",
-                color: codeCopied ? "var(--go)" : "var(--text-dim)",
-              }}
-            >
+              style={{ background: "var(--surface-2)", borderRadius: "var(--radius-sm)", color: codeCopied ? "var(--go)" : "var(--text-dim)" }}>
               {codeCopied ? <Check size={11} /> : <Copy size={11} />}
               {room.code}
             </button>
@@ -311,90 +238,52 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         </div>
       </div>
 
-      {/* ── Bottom sheet ── */}
-      <div
-        className="absolute left-4 right-4 safe-bottom"
-        style={{ zIndex: 1000, bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}
-      >
-        <div
-          style={{
-            background: "var(--surface)",
-            borderRadius: "var(--radius-lg)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          {/* Drag handle + toggle (mobile) */}
-          <button
-            className="w-full flex flex-col items-center pt-3 pb-2 md:hidden active:opacity-70"
-            onClick={() => setPanelOpen((o) => !o)}
-            aria-label="Toggle panel"
-          >
+      {/* Bottom sheet */}
+      <div className="absolute left-4 right-4 safe-bottom" style={{ zIndex: 1000, bottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)" }}>
+        <div style={{ background: "var(--surface)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
+          <button className="w-full flex flex-col items-center pt-3 pb-2 md:hidden active:opacity-70" onClick={() => setPanelOpen((o) => !o)} aria-label="Toggle panel">
             <div className="w-10 h-1 rounded-full mb-2" style={{ background: "var(--border)" }} />
             <div className="w-full flex items-center justify-between px-5 pb-1">
               <span className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                {activeTrip ? "Tracking" : "Ready"}
+                {activeTrip ? t("room_status_tracking") : t("room_status_ready")}
               </span>
-              {panelOpen
-                ? <ChevronDown size={14} style={{ color: "var(--text-muted)" }} />
-                : <ChevronUp size={14} style={{ color: "var(--text-muted)" }} />
-              }
+              {panelOpen ? <ChevronDown size={14} style={{ color: "var(--text-muted)" }} /> : <ChevronUp size={14} style={{ color: "var(--text-muted)" }} />}
             </div>
           </button>
 
-          {/* Panel content */}
           <div className={`px-4 pb-4 ${panelOpen ? "block" : "hidden"} md:block md:px-5 md:pb-5`}>
-            {/* Stats grid */}
             <div className="grid grid-cols-4 gap-2 mb-4 pt-2 md:pt-4">
-              <StatBox icon={Clock} label="Time" value={activeTrip ? elapsed || "0:00" : "—"} live={!!activeTrip} />
-              <StatBox icon={Navigation} label="Dist" value={totalDist > 0 ? formatDistance(totalDist) : "—"} />
-              <StatBox icon={MapPin} label="Pts" value={points.length.toString()} />
-              <StatBox icon={Users} label="GPS" value={geo.accuracy ? `±${Math.round(geo.accuracy)}m` : "—"} live={!!geo.isTracking} />
+              <StatBox icon={Clock} label={t("room_stat_time")} value={activeTrip ? elapsed || "0:00" : "—"} live={!!activeTrip} />
+              <StatBox icon={Navigation} label={t("room_stat_dist")} value={totalDist > 0 ? formatDistance(totalDist) : "—"} />
+              <StatBox icon={MapPin} label={t("room_stat_pts")} value={points.length.toString()} />
+              <StatBox icon={Users} label={t("room_stat_gps")} value={geo.accuracy ? `±${Math.round(geo.accuracy)}m` : "—"} live={!!geo.isTracking} />
             </div>
 
-            {/* CTA row */}
             <div className="flex gap-2">
               {isOwner && (
                 <>
                   {!activeTrip ? (
-                    <button
-                      onClick={startTrip}
-                      disabled={startingTrip || permState === "requesting"}
+                    <button onClick={startTrip} disabled={startingTrip || permState === "requesting"}
                       className="flex-1 py-4 font-bold text-sm flex items-center justify-center gap-2 transition-opacity active:opacity-80 disabled:opacity-40"
-                      style={{ background: "var(--go)", color: "white", borderRadius: "var(--radius)" }}
-                    >
+                      style={{ background: "var(--go)", color: "white", borderRadius: "var(--radius)" }}>
                       {startingTrip || permState === "requesting"
                         ? <Loader2 size={15} className="animate-spin" />
                         : permState === "denied"
-                          ? <><AlertTriangle size={15} /> Location needed</>
-                          : <><Play size={15} fill="currentColor" /> Start trip</>
-                      }
+                          ? <><AlertTriangle size={15} /> {t("room_location_needed")}</>
+                          : <><Play size={15} fill="currentColor" /> {t("room_start")}</>}
                     </button>
                   ) : (
-                    <button
-                      onClick={stopTrip}
-                      disabled={stoppingTrip}
+                    <button onClick={stopTrip} disabled={stoppingTrip}
                       className="flex-1 py-4 font-bold text-sm flex items-center justify-center gap-2 transition-opacity active:opacity-80 disabled:opacity-40"
-                      style={{ background: "var(--danger)", color: "white", borderRadius: "var(--radius)" }}
-                    >
-                      {stoppingTrip
-                        ? <Loader2 size={15} className="animate-spin" />
-                        : <><Square size={15} fill="currentColor" /> End trip</>
-                      }
+                      style={{ background: "var(--danger)", color: "white", borderRadius: "var(--radius)" }}>
+                      {stoppingTrip ? <Loader2 size={15} className="animate-spin" /> : <><Square size={15} fill="currentColor" /> {t("room_end")}</>}
                     </button>
                   )}
                 </>
               )}
-
-              <button
-                onClick={copyCode}
+              <button onClick={copyCode}
                 className="flex items-center gap-2 px-4 py-4 font-bold text-sm transition-opacity active:opacity-70"
-                style={{
-                  background: "var(--surface-2)",
-                  color: codeCopied ? "var(--go)" : "var(--text)",
-                  borderRadius: "var(--radius)",
-                  border: "1px solid var(--border)",
-                }}
-              >
+                style={{ background: "var(--surface-2)", color: codeCopied ? "var(--go)" : "var(--text)", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
                 {codeCopied ? <Check size={14} /> : <Copy size={14} />}
                 <span className="mono font-black tracking-widest text-xs">{room.code}</span>
               </button>
@@ -406,17 +295,9 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   );
 }
 
-function StatBox({ icon: Icon, label, value, live = false }: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  live?: boolean;
-}) {
+function StatBox({ icon: Icon, label, value, live = false }: { icon: React.ElementType; label: string; value: string; live?: boolean }) {
   return (
-    <div
-      className="flex flex-col items-center text-center p-2.5 min-h-[64px] justify-center"
-      style={{ background: "var(--surface-2)", borderRadius: "var(--radius)" }}
-    >
+    <div className="flex flex-col items-center text-center p-2.5 min-h-[64px] justify-center" style={{ background: "var(--surface-2)", borderRadius: "var(--radius)" }}>
       <Icon size={12} className="mb-1.5" style={{ color: live ? "var(--go)" : "var(--text-muted)" }} />
       <div className="text-sm font-black mono leading-none" style={{ color: live ? "var(--go)" : "var(--text)" }}>{value}</div>
       <div className="text-[9px] font-semibold uppercase tracking-wide mt-1" style={{ color: "var(--text-muted)" }}>{label}</div>
